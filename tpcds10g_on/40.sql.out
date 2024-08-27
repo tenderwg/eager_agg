@@ -1,0 +1,30 @@
+                                                                                                QUERY PLAN                                                                                                 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Finalize GroupAggregate
+         Group Key: warehouse.w_state, item.i_item_id
+         ->  Gather Merge
+               Workers Planned: 2
+               ->  Partial GroupAggregate
+                     Group Key: warehouse.w_state, item.i_item_id
+                     ->  Sort
+                           Sort Key: warehouse.w_state, item.i_item_id
+                           ->  Nested Loop Left Join
+                                 ->  Hash Join
+                                       Hash Cond: (catalog_sales.cs_warehouse_sk = warehouse.w_warehouse_sk)
+                                       ->  Nested Loop
+                                             ->  Parallel Hash Join
+                                                   Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim.d_date_sk)
+                                                   ->  Parallel Seq Scan on catalog_sales
+                                                   ->  Parallel Hash
+                                                         ->  Parallel Seq Scan on date_dim
+                                                               Filter: ((d_date >= '1999-03-26 00:00:00'::timestamp without time zone) AND (d_date <= '1999-05-25 00:00:00'::timestamp without time zone))
+                                             ->  Index Scan using item_pkey on item
+                                                   Index Cond: (i_item_sk = catalog_sales.cs_item_sk)
+                                                   Filter: ((i_current_price >= 0.99) AND (i_current_price <= 1.49))
+                                       ->  Hash
+                                             ->  Seq Scan on warehouse
+                                 ->  Index Scan using catalog_returns_pkey on catalog_returns
+                                       Index Cond: ((cr_item_sk = catalog_sales.cs_item_sk) AND (cr_order_number = catalog_sales.cs_order_number))
+(26 rows)
+

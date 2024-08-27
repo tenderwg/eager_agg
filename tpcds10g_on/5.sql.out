@@ -1,0 +1,81 @@
+                                                                                                   QUERY PLAN                                                                                                   
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  GroupAggregate
+         Group Key: ('store channel'::text), (('store'::text || (ssr.s_store_id)::text))
+         Group Key: ('store channel'::text)
+         Group Key: ()
+         ->  Sort
+               Sort Key: ('store channel'::text), (('store'::text || (ssr.s_store_id)::text))
+               ->  Append
+                     ->  Subquery Scan on ssr
+                           ->  Finalize GroupAggregate
+                                 Group Key: store.s_store_id
+                                 ->  Gather Merge
+                                       Workers Planned: 2
+                                       ->  Partial GroupAggregate
+                                             Group Key: store.s_store_id
+                                             ->  Sort
+                                                   Sort Key: store.s_store_id
+                                                   ->  Hash Join
+                                                         Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                                         ->  Parallel Hash Join
+                                                               Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                               ->  Parallel Append
+                                                                     ->  Parallel Seq Scan on store_sales
+                                                                     ->  Parallel Seq Scan on store_returns
+                                                               ->  Parallel Hash
+                                                                     ->  Parallel Seq Scan on date_dim
+                                                                           Filter: ((d_date >= '2000-08-19'::date) AND (d_date <= '2000-09-02 00:00:00'::timestamp without time zone))
+                                                         ->  Hash
+                                                               ->  Seq Scan on store
+                     ->  Subquery Scan on csr
+                           ->  Finalize GroupAggregate
+                                 Group Key: catalog_page.cp_catalog_page_id
+                                 ->  Sort
+                                       Sort Key: catalog_page.cp_catalog_page_id
+                                       ->  Nested Loop
+                                             ->  Partial GroupAggregate
+                                                   Group Key: catalog_sales.cs_catalog_page_sk
+                                                   ->  Sort
+                                                         Sort Key: catalog_sales.cs_catalog_page_sk
+                                                         ->  Gather
+                                                               Workers Planned: 2
+                                                               ->  Parallel Hash Join
+                                                                     Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_1.d_date_sk)
+                                                                     ->  Parallel Append
+                                                                           ->  Parallel Seq Scan on catalog_sales
+                                                                           ->  Parallel Seq Scan on catalog_returns
+                                                                     ->  Parallel Hash
+                                                                           ->  Parallel Seq Scan on date_dim date_dim_1
+                                                                                 Filter: ((d_date >= '2000-08-19'::date) AND (d_date <= '2000-09-02 00:00:00'::timestamp without time zone))
+                                             ->  Index Scan using catalog_page_pkey on catalog_page
+                                                   Index Cond: (cp_catalog_page_sk = catalog_sales.cs_catalog_page_sk)
+                     ->  Subquery Scan on wsr
+                           ->  Finalize GroupAggregate
+                                 Group Key: web_site.web_site_id
+                                 ->  Gather Merge
+                                       Workers Planned: 2
+                                       ->  Partial GroupAggregate
+                                             Group Key: web_site.web_site_id
+                                             ->  Sort
+                                                   Sort Key: web_site.web_site_id
+                                                   ->  Hash Join
+                                                         Hash Cond: ("*SELECT* 2".wsr_web_site_sk = web_site.web_site_sk)
+                                                         ->  Parallel Hash Join
+                                                               Hash Cond: ("*SELECT* 2".date_sk = date_dim_2.d_date_sk)
+                                                               ->  Parallel Append
+                                                                     ->  Subquery Scan on "*SELECT* 2"
+                                                                           ->  Parallel Hash Right Join
+                                                                                 Hash Cond: ((web_sales_1.ws_item_sk = web_returns.wr_item_sk) AND (web_sales_1.ws_order_number = web_returns.wr_order_number))
+                                                                                 ->  Parallel Seq Scan on web_sales web_sales_1
+                                                                                 ->  Parallel Hash
+                                                                                       ->  Parallel Seq Scan on web_returns
+                                                                     ->  Parallel Seq Scan on web_sales
+                                                               ->  Parallel Hash
+                                                                     ->  Parallel Seq Scan on date_dim date_dim_2
+                                                                           Filter: ((d_date >= '2000-08-19'::date) AND (d_date <= '2000-09-02 00:00:00'::timestamp without time zone))
+                                                         ->  Hash
+                                                               ->  Seq Scan on web_site
+(77 rows)
+

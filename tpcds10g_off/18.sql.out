@@ -1,0 +1,41 @@
+                                                                     QUERY PLAN                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: customer_address.ca_country, customer_address.ca_state, customer_address.ca_county, item.i_item_id
+         ->  GroupAggregate
+               Group Key: item.i_item_id, customer_address.ca_country, customer_address.ca_state, customer_address.ca_county
+               Group Key: item.i_item_id, customer_address.ca_country, customer_address.ca_state
+               Group Key: item.i_item_id, customer_address.ca_country
+               Group Key: item.i_item_id
+               Group Key: ()
+               ->  Sort
+                     Sort Key: item.i_item_id, customer_address.ca_country, customer_address.ca_state, customer_address.ca_county
+                     ->  Gather
+                           Workers Planned: 2
+                           ->  Nested Loop
+                                 ->  Nested Loop
+                                       ->  Nested Loop
+                                             ->  Nested Loop
+                                                   ->  Nested Loop
+                                                         ->  Parallel Hash Join
+                                                               Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim.d_date_sk)
+                                                               ->  Parallel Seq Scan on catalog_sales
+                                                               ->  Parallel Hash
+                                                                     ->  Parallel Seq Scan on date_dim
+                                                                           Filter: (d_year = 2001)
+                                                         ->  Index Scan using customer_demographics_pkey on customer_demographics cd1
+                                                               Index Cond: (cd_demo_sk = catalog_sales.cs_bill_cdemo_sk)
+                                                               Filter: ((cd_gender = 'M'::bpchar) AND (cd_education_status = '4 yr Degree'::bpchar))
+                                                   ->  Index Scan using customer_pkey on customer
+                                                         Index Cond: (c_customer_sk = catalog_sales.cs_bill_customer_sk)
+                                                         Filter: (c_birth_month = ANY ('{6,8,3,11,9,10}'::integer[]))
+                                             ->  Index Scan using customer_address_pkey on customer_address
+                                                   Index Cond: (ca_address_sk = customer.c_current_addr_sk)
+                                                   Filter: (ca_state = ANY ('{AR,TN,KS,TX,SD,NY,IN}'::bpchar[]))
+                                       ->  Index Only Scan using customer_demographics_pkey on customer_demographics cd2
+                                             Index Cond: (cd_demo_sk = customer.c_current_cdemo_sk)
+                                 ->  Index Scan using item_pkey on item
+                                       Index Cond: (i_item_sk = catalog_sales.cs_item_sk)
+(37 rows)
+

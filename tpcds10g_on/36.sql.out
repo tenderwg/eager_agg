@@ -1,0 +1,32 @@
+                                                                                                                        QUERY PLAN                                                                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: sub.lochierarchy DESC, (CASE WHEN (sub.lochierarchy = 0) THEN sub.i_category ELSE NULL::bpchar END), sub.rank_within_parent
+         ->  Subquery Scan on sub
+               ->  WindowAgg
+                     ->  Sort
+                           Sort Key: ((GROUPING(item.i_category) + GROUPING(item.i_class))), (CASE WHEN (GROUPING(item.i_class) = 0) THEN item.i_category ELSE NULL::bpchar END), ((sum(store_sales.ss_net_profit) / sum(store_sales.ss_ext_sales_price)))
+                           ->  MixedAggregate
+                                 Hash Key: item.i_category, item.i_class
+                                 Hash Key: item.i_category
+                                 Group Key: ()
+                                 ->  Gather
+                                       Workers Planned: 2
+                                       ->  Parallel Hash Join
+                                             Hash Cond: (store_sales.ss_item_sk = item.i_item_sk)
+                                             ->  Hash Join
+                                                   Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                                   ->  Parallel Hash Join
+                                                         Hash Cond: (store_sales.ss_sold_date_sk = d1.d_date_sk)
+                                                         ->  Parallel Seq Scan on store_sales
+                                                         ->  Parallel Hash
+                                                               ->  Parallel Seq Scan on date_dim d1
+                                                                     Filter: (d_year = 1998)
+                                                   ->  Hash
+                                                         ->  Seq Scan on store
+                                                               Filter: (s_state = ANY ('{TN,AL,SD,AL,SD,SD,SD,SD}'::bpchar[]))
+                                             ->  Parallel Hash
+                                                   ->  Parallel Seq Scan on item
+(28 rows)
+

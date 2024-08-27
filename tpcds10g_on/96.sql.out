@@ -1,0 +1,27 @@
+                                                   QUERY PLAN                                                   
+----------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: (count(*))
+         ->  Finalize Aggregate
+               ->  Gather
+                     Workers Planned: 2
+                     ->  Partial Aggregate
+                           ->  Hash Join
+                                 Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                 ->  Hash Join
+                                       Hash Cond: (store_sales.ss_hdemo_sk = household_demographics.hd_demo_sk)
+                                       ->  Parallel Hash Join
+                                             Hash Cond: (store_sales.ss_sold_time_sk = time_dim.t_time_sk)
+                                             ->  Parallel Seq Scan on store_sales
+                                             ->  Parallel Hash
+                                                   ->  Parallel Seq Scan on time_dim
+                                                         Filter: ((t_minute >= 30) AND (t_hour = 8))
+                                       ->  Hash
+                                             ->  Seq Scan on household_demographics
+                                                   Filter: (hd_dep_count = 6)
+                                 ->  Hash
+                                       ->  Seq Scan on store
+                                             Filter: ((s_store_name)::text = 'ese'::text)
+(23 rows)
+

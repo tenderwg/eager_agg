@@ -1,0 +1,49 @@
+                                                             QUERY PLAN                                                              
+-------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: store.s_store_name, item.i_item_desc
+         ->  Nested Loop
+               ->  Merge Join
+                     Merge Cond: (store_sales.ss_store_sk = store_sales_1.ss_store_sk)
+                     Join Filter: ((sum(store_sales_1.ss_sales_price)) <= (0.1 * (avg((sum(store_sales.ss_sales_price))))))
+                     ->  Merge Join
+                           Merge Cond: (store.s_store_sk = store_sales.ss_store_sk)
+                           ->  Sort
+                                 Sort Key: store.s_store_sk
+                                 ->  Seq Scan on store
+                           ->  GroupAggregate
+                                 Group Key: store_sales.ss_store_sk
+                                 ->  Finalize GroupAggregate
+                                       Group Key: store_sales.ss_store_sk, store_sales.ss_item_sk
+                                       ->  Gather Merge
+                                             Workers Planned: 2
+                                             ->  Partial GroupAggregate
+                                                   Group Key: store_sales.ss_store_sk, store_sales.ss_item_sk
+                                                   ->  Sort
+                                                         Sort Key: store_sales.ss_store_sk, store_sales.ss_item_sk
+                                                         ->  Parallel Hash Join
+                                                               Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                               ->  Parallel Seq Scan on store_sales
+                                                               ->  Parallel Hash
+                                                                     ->  Parallel Seq Scan on date_dim
+                                                                           Filter: ((d_month_seq >= 1207) AND (d_month_seq <= 1218))
+                     ->  Materialize
+                           ->  Finalize GroupAggregate
+                                 Group Key: store_sales_1.ss_store_sk, store_sales_1.ss_item_sk
+                                 ->  Gather Merge
+                                       Workers Planned: 2
+                                       ->  Partial GroupAggregate
+                                             Group Key: store_sales_1.ss_store_sk, store_sales_1.ss_item_sk
+                                             ->  Sort
+                                                   Sort Key: store_sales_1.ss_store_sk, store_sales_1.ss_item_sk
+                                                   ->  Parallel Hash Join
+                                                         Hash Cond: (store_sales_1.ss_sold_date_sk = date_dim_1.d_date_sk)
+                                                         ->  Parallel Seq Scan on store_sales store_sales_1
+                                                         ->  Parallel Hash
+                                                               ->  Parallel Seq Scan on date_dim date_dim_1
+                                                                     Filter: ((d_month_seq >= 1207) AND (d_month_seq <= 1218))
+               ->  Index Scan using item_pkey on item
+                     Index Cond: (i_item_sk = store_sales_1.ss_item_sk)
+(45 rows)
+

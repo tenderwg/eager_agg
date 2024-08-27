@@ -1,0 +1,33 @@
+                                                                     QUERY PLAN                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Aggregate
+         ->  Hash Join
+               Hash Cond: (catalog_sales.cs_item_sk = item.i_item_sk)
+               Join Filter: (catalog_sales.cs_ext_discount_amt > (SubPlan 1))
+               ->  Gather
+                     Workers Planned: 2
+                     ->  Parallel Hash Join
+                           Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim.d_date_sk)
+                           ->  Parallel Seq Scan on catalog_sales
+                           ->  Parallel Hash
+                                 ->  Parallel Seq Scan on date_dim
+                                       Filter: ((d_date >= '2001-03-14'::date) AND (d_date <= '2001-06-12 00:00:00'::timestamp without time zone))
+               ->  Hash
+                     ->  Seq Scan on item
+                           Filter: (i_manufact_id = 994)
+               SubPlan 1
+                 ->  Aggregate
+                       ->  Nested Loop
+                             ->  Bitmap Heap Scan on catalog_sales catalog_sales_1
+                                   Recheck Cond: (cs_item_sk = item.i_item_sk)
+                                   ->  Bitmap Index Scan on catalog_sales_pkey
+                                         Index Cond: (cs_item_sk = item.i_item_sk)
+                             ->  Memoize
+                                   Cache Key: catalog_sales_1.cs_sold_date_sk
+                                   Cache Mode: logical
+                                   ->  Index Scan using date_dim_pkey on date_dim date_dim_1
+                                         Index Cond: (d_date_sk = catalog_sales_1.cs_sold_date_sk)
+                                         Filter: ((d_date >= '2001-03-14'::date) AND (d_date <= '2001-06-12 00:00:00'::timestamp without time zone))
+(29 rows)
+

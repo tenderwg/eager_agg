@@ -1,0 +1,110 @@
+                                                                                                  QUERY PLAN                                                                                                   
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  GroupAggregate
+         Group Key: ('store channel'::text), (('store'::text || (ssr.store_id)::text))
+         Group Key: ('store channel'::text)
+         Group Key: ()
+         ->  Sort
+               Sort Key: ('store channel'::text), (('store'::text || (ssr.store_id)::text))
+               ->  Append
+                     ->  Subquery Scan on ssr
+                           ->  GroupAggregate
+                                 Group Key: store.s_store_id
+                                 ->  Nested Loop Left Join
+                                       ->  Nested Loop
+                                             ->  Gather Merge
+                                                   Workers Planned: 2
+                                                   ->  Sort
+                                                         Sort Key: store.s_store_id
+                                                         ->  Hash Join
+                                                               Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                                               ->  Hash Join
+                                                                     Hash Cond: (store_sales.ss_promo_sk = promotion.p_promo_sk)
+                                                                     ->  Parallel Hash Join
+                                                                           Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                                           ->  Parallel Seq Scan on store_sales
+                                                                           ->  Parallel Hash
+                                                                                 ->  Parallel Seq Scan on date_dim
+                                                                                       Filter: ((d_date >= '1999-08-10'::date) AND (d_date <= '1999-09-09 00:00:00'::timestamp without time zone))
+                                                                     ->  Hash
+                                                                           ->  Seq Scan on promotion
+                                                                                 Filter: (p_channel_tv = 'N'::bpchar)
+                                                               ->  Hash
+                                                                     ->  Seq Scan on store
+                                             ->  Index Scan using item_pkey on item
+                                                   Index Cond: (i_item_sk = store_sales.ss_item_sk)
+                                                   Filter: (i_current_price > '50'::numeric)
+                                       ->  Index Scan using store_returns_pkey on store_returns
+                                             Index Cond: ((sr_item_sk = store_sales.ss_item_sk) AND (sr_ticket_number = store_sales.ss_ticket_number))
+                     ->  Subquery Scan on csr
+                           ->  Finalize GroupAggregate
+                                 Group Key: catalog_page.cp_catalog_page_id
+                                 ->  Nested Loop
+                                       ->  Nested Loop
+                                             ->  Partial GroupAggregate
+                                                   Group Key: catalog_page.cp_catalog_page_id, catalog_sales.cs_item_sk, catalog_sales.cs_promo_sk
+                                                   ->  Incremental Sort
+                                                         Sort Key: catalog_page.cp_catalog_page_id, catalog_sales.cs_item_sk, catalog_sales.cs_promo_sk
+                                                         Presorted Key: catalog_page.cp_catalog_page_id
+                                                         ->  Gather Merge
+                                                               Workers Planned: 2
+                                                               ->  Sort
+                                                                     Sort Key: catalog_page.cp_catalog_page_id
+                                                                     ->  Nested Loop Left Join
+                                                                           ->  Hash Join
+                                                                                 Hash Cond: (catalog_sales.cs_catalog_page_sk = catalog_page.cp_catalog_page_sk)
+                                                                                 ->  Parallel Hash Join
+                                                                                       Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_1.d_date_sk)
+                                                                                       ->  Parallel Seq Scan on catalog_sales
+                                                                                       ->  Parallel Hash
+                                                                                             ->  Parallel Seq Scan on date_dim date_dim_1
+                                                                                                   Filter: ((d_date >= '1999-08-10'::date) AND (d_date <= '1999-09-09 00:00:00'::timestamp without time zone))
+                                                                                 ->  Hash
+                                                                                       ->  Seq Scan on catalog_page
+                                                                           ->  Index Scan using catalog_returns_pkey on catalog_returns
+                                                                                 Index Cond: ((cr_item_sk = catalog_sales.cs_item_sk) AND (cr_order_number = catalog_sales.cs_order_number))
+                                             ->  Memoize
+                                                   Cache Key: catalog_sales.cs_promo_sk
+                                                   Cache Mode: logical
+                                                   ->  Index Scan using promotion_pkey on promotion promotion_1
+                                                         Index Cond: (p_promo_sk = catalog_sales.cs_promo_sk)
+                                                         Filter: (p_channel_tv = 'N'::bpchar)
+                                       ->  Index Scan using item_pkey on item item_1
+                                             Index Cond: (i_item_sk = catalog_sales.cs_item_sk)
+                                             Filter: (i_current_price > '50'::numeric)
+                     ->  Subquery Scan on wsr
+                           ->  Finalize GroupAggregate
+                                 Group Key: web_site.web_site_id
+                                 ->  Nested Loop
+                                       ->  Nested Loop
+                                             ->  Partial GroupAggregate
+                                                   Group Key: web_site.web_site_id, web_sales.ws_item_sk, web_sales.ws_promo_sk
+                                                   ->  Sort
+                                                         Sort Key: web_site.web_site_id, web_sales.ws_item_sk, web_sales.ws_promo_sk
+                                                         ->  Gather
+                                                               Workers Planned: 2
+                                                               ->  Hash Join
+                                                                     Hash Cond: (web_sales.ws_web_site_sk = web_site.web_site_sk)
+                                                                     ->  Nested Loop Left Join
+                                                                           ->  Parallel Hash Join
+                                                                                 Hash Cond: (web_sales.ws_sold_date_sk = date_dim_2.d_date_sk)
+                                                                                 ->  Parallel Seq Scan on web_sales
+                                                                                 ->  Parallel Hash
+                                                                                       ->  Parallel Seq Scan on date_dim date_dim_2
+                                                                                             Filter: ((d_date >= '1999-08-10'::date) AND (d_date <= '1999-09-09 00:00:00'::timestamp without time zone))
+                                                                           ->  Index Scan using web_returns_pkey on web_returns
+                                                                                 Index Cond: ((wr_item_sk = web_sales.ws_item_sk) AND (wr_order_number = web_sales.ws_order_number))
+                                                                     ->  Hash
+                                                                           ->  Seq Scan on web_site
+                                             ->  Memoize
+                                                   Cache Key: web_sales.ws_promo_sk
+                                                   Cache Mode: logical
+                                                   ->  Index Scan using promotion_pkey on promotion promotion_2
+                                                         Index Cond: (p_promo_sk = web_sales.ws_promo_sk)
+                                                         Filter: (p_channel_tv = 'N'::bpchar)
+                                       ->  Index Scan using item_pkey on item item_2
+                                             Index Cond: (i_item_sk = web_sales.ws_item_sk)
+                                             Filter: (i_current_price > '50'::numeric)
+(106 rows)
+

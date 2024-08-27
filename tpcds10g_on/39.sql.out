@@ -1,0 +1,39 @@
+                                                                                                     QUERY PLAN                                                                                                     
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: inv1.w_warehouse_sk, inv1.i_item_sk, inv1.mean, inv1.cov, inv2.mean, inv2.cov
+   CTE inv
+     ->  Subquery Scan on foo
+           ->  Finalize GroupAggregate
+                 Group Key: warehouse.w_warehouse_sk, item.i_item_sk, date_dim.d_moy
+                 Filter: (CASE avg(inventory.inv_quantity_on_hand) WHEN '0'::numeric THEN '0'::numeric ELSE (stddev_samp(inventory.inv_quantity_on_hand) / avg(inventory.inv_quantity_on_hand)) END > '1'::numeric)
+                 ->  Gather Merge
+                       Workers Planned: 2
+                       ->  Merge Join
+                             Merge Cond: (inventory.inv_warehouse_sk = warehouse.w_warehouse_sk)
+                             ->  Partial GroupAggregate
+                                   Group Key: inventory.inv_warehouse_sk, item.i_item_sk, date_dim.d_moy
+                                   ->  Sort
+                                         Sort Key: inventory.inv_warehouse_sk, item.i_item_sk, date_dim.d_moy
+                                         ->  Parallel Hash Join
+                                               Hash Cond: (inventory.inv_item_sk = item.i_item_sk)
+                                               ->  Parallel Hash Join
+                                                     Hash Cond: (inventory.inv_date_sk = date_dim.d_date_sk)
+                                                     ->  Parallel Seq Scan on inventory
+                                                     ->  Parallel Hash
+                                                           ->  Parallel Seq Scan on date_dim
+                                                                 Filter: (d_year = 1998)
+                                               ->  Parallel Hash
+                                                     ->  Parallel Seq Scan on item
+                             ->  Sort
+                                   Sort Key: warehouse.w_warehouse_sk
+                                   ->  Seq Scan on warehouse
+   ->  Hash Join
+         Hash Cond: ((inv1.i_item_sk = inv2.i_item_sk) AND (inv1.w_warehouse_sk = inv2.w_warehouse_sk))
+         ->  CTE Scan on inv inv1
+               Filter: (d_moy = 4)
+         ->  Hash
+               ->  CTE Scan on inv inv2
+                     Filter: (d_moy = 5)
+(35 rows)
+

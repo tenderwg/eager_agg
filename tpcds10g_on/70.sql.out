@@ -1,0 +1,56 @@
+                                                                                                       QUERY PLAN                                                                                                       
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: sub.lochierarchy DESC, (CASE WHEN (sub.lochierarchy = 0) THEN sub.s_state ELSE NULL::bpchar END), sub.rank_within_parent
+         ->  Subquery Scan on sub
+               ->  WindowAgg
+                     ->  Sort
+                           Sort Key: ((GROUPING(store.s_state) + GROUPING(store.s_county))), (CASE WHEN (GROUPING(store.s_county) = 0) THEN store.s_state ELSE NULL::bpchar END), (sum(store_sales.ss_net_profit)) DESC
+                           ->  GroupAggregate
+                                 Group Key: store.s_state, store.s_county
+                                 Group Key: store.s_state
+                                 Group Key: ()
+                                 ->  Incremental Sort
+                                       Sort Key: store.s_state, store.s_county
+                                       Presorted Key: store.s_state
+                                       ->  Nested Loop
+                                             Join Filter: (store.s_state = store_1.s_state)
+                                             ->  WindowAgg
+                                                   Run Condition: (rank() OVER (?) <= 5)
+                                                   ->  Incremental Sort
+                                                         Sort Key: store_1.s_state, (sum(store_sales_1.ss_net_profit)) DESC
+                                                         Presorted Key: store_1.s_state
+                                                         ->  Finalize GroupAggregate
+                                                               Group Key: store_1.s_state
+                                                               ->  Gather Merge
+                                                                     Workers Planned: 2
+                                                                     ->  Partial GroupAggregate
+                                                                           Group Key: store_1.s_state
+                                                                           ->  Sort
+                                                                                 Sort Key: store_1.s_state
+                                                                                 ->  Hash Join
+                                                                                       Hash Cond: (store_sales_1.ss_store_sk = store_1.s_store_sk)
+                                                                                       ->  Parallel Hash Join
+                                                                                             Hash Cond: (store_sales_1.ss_sold_date_sk = date_dim.d_date_sk)
+                                                                                             ->  Parallel Seq Scan on store_sales store_sales_1
+                                                                                             ->  Parallel Hash
+                                                                                                   ->  Parallel Seq Scan on date_dim
+                                                                                                         Filter: ((d_month_seq >= 1186) AND (d_month_seq <= 1197))
+                                                                                       ->  Hash
+                                                                                             ->  Seq Scan on store store_1
+                                             ->  Materialize
+                                                   ->  Gather
+                                                         Workers Planned: 2
+                                                         ->  Hash Join
+                                                               Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                                               ->  Parallel Hash Join
+                                                                     Hash Cond: (store_sales.ss_sold_date_sk = d1.d_date_sk)
+                                                                     ->  Parallel Seq Scan on store_sales
+                                                                     ->  Parallel Hash
+                                                                           ->  Parallel Seq Scan on date_dim d1
+                                                                                 Filter: ((d_month_seq >= 1186) AND (d_month_seq <= 1197))
+                                                               ->  Hash
+                                                                     ->  Seq Scan on store
+(52 rows)
+

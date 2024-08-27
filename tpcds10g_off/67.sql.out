@@ -1,0 +1,42 @@
+                                                                                        QUERY PLAN                                                                                         
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Incremental Sort
+         Sort Key: dw1.i_category, dw1.i_class, dw1.i_brand, dw1.i_product_name, dw1.d_year, dw1.d_qoy, dw1.d_moy, dw1.s_store_id, dw1.sumsales, (rank() OVER (?))
+         Presorted Key: dw1.i_category
+         ->  WindowAgg
+               Run Condition: (rank() OVER (?) <= 100)
+               ->  Incremental Sort
+                     Sort Key: dw1.i_category, dw1.sumsales DESC
+                     Presorted Key: dw1.i_category
+                     ->  Subquery Scan on dw1
+                           ->  GroupAggregate
+                                 Group Key: item.i_category, item.i_class, item.i_brand, item.i_product_name, date_dim.d_year, date_dim.d_qoy, date_dim.d_moy, store.s_store_id
+                                 Group Key: item.i_category, item.i_class, item.i_brand, item.i_product_name, date_dim.d_year, date_dim.d_qoy, date_dim.d_moy
+                                 Group Key: item.i_category, item.i_class, item.i_brand, item.i_product_name, date_dim.d_year, date_dim.d_qoy
+                                 Group Key: item.i_category, item.i_class, item.i_brand, item.i_product_name, date_dim.d_year
+                                 Group Key: item.i_category, item.i_class, item.i_brand, item.i_product_name
+                                 Group Key: item.i_category, item.i_class, item.i_brand
+                                 Group Key: item.i_category, item.i_class
+                                 Group Key: item.i_category
+                                 Group Key: ()
+                                 ->  Gather Merge
+                                       Workers Planned: 2
+                                       ->  Sort
+                                             Sort Key: item.i_category, item.i_class, item.i_brand, item.i_product_name, date_dim.d_year, date_dim.d_qoy, date_dim.d_moy, store.s_store_id
+                                             ->  Parallel Hash Join
+                                                   Hash Cond: (item.i_item_sk = store_sales.ss_item_sk)
+                                                   ->  Parallel Seq Scan on item
+                                                   ->  Parallel Hash
+                                                         ->  Hash Join
+                                                               Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                                               ->  Parallel Hash Join
+                                                                     Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                                     ->  Parallel Seq Scan on store_sales
+                                                                     ->  Parallel Hash
+                                                                           ->  Parallel Seq Scan on date_dim
+                                                                                 Filter: ((d_month_seq >= 1214) AND (d_month_seq <= 1225))
+                                                               ->  Hash
+                                                                     ->  Seq Scan on store
+(38 rows)
+

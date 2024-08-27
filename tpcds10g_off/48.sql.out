@@ -1,0 +1,27 @@
+                                                                                                                                                                                                                                                                                                                                                                                                                      QUERY PLAN                                                                                                                                                                                                                                                                                                                                                                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather
+         Workers Planned: 2
+         ->  Partial Aggregate
+               ->  Nested Loop
+                     ->  Nested Loop
+                           ->  Hash Join
+                                 Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                 ->  Parallel Hash Join
+                                       Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                       ->  Parallel Seq Scan on store_sales
+                                             Filter: ((((ss_sales_price >= 100.00) AND (ss_sales_price <= 150.00)) OR ((ss_sales_price >= 50.00) AND (ss_sales_price <= 100.00)) OR ((ss_sales_price >= 150.00) AND (ss_sales_price <= 200.00))) AND (((ss_net_profit >= '0'::numeric) AND (ss_net_profit <= '2000'::numeric)) OR ((ss_net_profit >= '150'::numeric) AND (ss_net_profit <= '3000'::numeric)) OR ((ss_net_profit >= '50'::numeric) AND (ss_net_profit <= '25000'::numeric))))
+                                       ->  Parallel Hash
+                                             ->  Parallel Seq Scan on date_dim
+                                                   Filter: (d_year = 1998)
+                                 ->  Hash
+                                       ->  Seq Scan on store
+                           ->  Index Scan using customer_address_pkey on customer_address
+                                 Index Cond: (ca_address_sk = store_sales.ss_addr_sk)
+                                 Filter: (((ca_country)::text = 'United States'::text) AND ((ca_state = ANY ('{ID,IA,CA}'::bpchar[])) OR (ca_state = ANY ('{IN,WI,IL}'::bpchar[])) OR (ca_state = ANY ('{TX,WA,MN}'::bpchar[]))) AND (((ca_state = ANY ('{ID,IA,CA}'::bpchar[])) AND (store_sales.ss_net_profit >= '0'::numeric) AND (store_sales.ss_net_profit <= '2000'::numeric)) OR ((ca_state = ANY ('{IN,WI,IL}'::bpchar[])) AND (store_sales.ss_net_profit >= '150'::numeric) AND (store_sales.ss_net_profit <= '3000'::numeric)) OR ((ca_state = ANY ('{TX,WA,MN}'::bpchar[])) AND (store_sales.ss_net_profit >= '50'::numeric) AND (store_sales.ss_net_profit <= '25000'::numeric))))
+                     ->  Index Scan using customer_demographics_pkey on customer_demographics
+                           Index Cond: (cd_demo_sk = store_sales.ss_cdemo_sk)
+                           Filter: ((((cd_marital_status = 'M'::bpchar) AND (cd_education_status = 'Unknown'::bpchar)) OR ((cd_marital_status = 'S'::bpchar) AND (cd_education_status = '4 yr Degree'::bpchar)) OR ((cd_marital_status = 'D'::bpchar) AND (cd_education_status = '2 yr Degree'::bpchar))) AND (((cd_marital_status = 'M'::bpchar) AND (cd_education_status = 'Unknown'::bpchar) AND (store_sales.ss_sales_price >= 100.00) AND (store_sales.ss_sales_price <= 150.00)) OR ((cd_marital_status = 'S'::bpchar) AND (cd_education_status = '4 yr Degree'::bpchar) AND (store_sales.ss_sales_price >= 50.00) AND (store_sales.ss_sales_price <= 100.00)) OR ((cd_marital_status = 'D'::bpchar) AND (cd_education_status = '2 yr Degree'::bpchar) AND (store_sales.ss_sales_price >= 150.00) AND (store_sales.ss_sales_price <= 200.00))))
+(23 rows)
+

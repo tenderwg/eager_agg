@@ -1,0 +1,27 @@
+                                                                                           QUERY PLAN                                                                                            
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: item.i_category, item.i_class, item.i_item_id, item.i_item_desc, ((((sum(store_sales.ss_ext_sales_price)) * '100'::numeric) / sum((sum(store_sales.ss_ext_sales_price))) OVER (?)))
+   ->  WindowAgg
+         ->  Sort
+               Sort Key: item.i_class
+               ->  Finalize GroupAggregate
+                     Group Key: item.i_category, item.i_class, item.i_item_id, item.i_item_desc, item.i_current_price
+                     ->  Gather Merge
+                           Workers Planned: 2
+                           ->  Partial GroupAggregate
+                                 Group Key: item.i_category, item.i_class, item.i_item_id, item.i_item_desc, item.i_current_price
+                                 ->  Sort
+                                       Sort Key: item.i_category, item.i_class, item.i_item_id, item.i_item_desc, item.i_current_price
+                                       ->  Nested Loop
+                                             ->  Parallel Hash Join
+                                                   Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                   ->  Parallel Seq Scan on store_sales
+                                                   ->  Parallel Hash
+                                                         ->  Parallel Seq Scan on date_dim
+                                                               Filter: ((d_date >= '2002-01-02'::date) AND (d_date <= '2002-02-01 00:00:00'::timestamp without time zone))
+                                             ->  Index Scan using item_pkey on item
+                                                   Index Cond: (i_item_sk = store_sales.ss_item_sk)
+                                                   Filter: (i_category = ANY ('{Books,Shoes,Children}'::bpchar[]))
+(23 rows)
+

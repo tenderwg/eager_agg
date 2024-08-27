@@ -1,0 +1,157 @@
+                                                                 QUERY PLAN                                                                 
+--------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   CTE cross_items
+     ->  Hash Join
+           Hash Cond: ((item_3.i_brand_id = x1.brand_id) AND (item_3.i_class_id = x1.class_id) AND (item_3.i_category_id = x1.category_id))
+           ->  Seq Scan on item item_3
+           ->  Hash
+                 ->  Subquery Scan on x1
+                       ->  HashSetOp Intersect
+                             ->  Append
+                                   ->  Result
+                                         ->  HashSetOp Intersect
+                                               ->  Append
+                                                     ->  Subquery Scan on "*SELECT* 1"
+                                                           ->  Gather
+                                                                 Workers Planned: 2
+                                                                 ->  Parallel Hash Join
+                                                                       Hash Cond: (store_sales_1.ss_item_sk = iss.i_item_sk)
+                                                                       ->  Parallel Hash Join
+                                                                             Hash Cond: (store_sales_1.ss_sold_date_sk = d1.d_date_sk)
+                                                                             ->  Parallel Seq Scan on store_sales store_sales_1
+                                                                             ->  Parallel Hash
+                                                                                   ->  Parallel Seq Scan on date_dim d1
+                                                                                         Filter: ((d_year >= 1998) AND (d_year <= 2000))
+                                                                       ->  Parallel Hash
+                                                                             ->  Parallel Seq Scan on item iss
+                                                     ->  Subquery Scan on "*SELECT* 2"
+                                                           ->  Gather
+                                                                 Workers Planned: 2
+                                                                 ->  Parallel Hash Join
+                                                                       Hash Cond: (catalog_sales_1.cs_item_sk = ics.i_item_sk)
+                                                                       ->  Parallel Hash Join
+                                                                             Hash Cond: (catalog_sales_1.cs_sold_date_sk = d2.d_date_sk)
+                                                                             ->  Parallel Seq Scan on catalog_sales catalog_sales_1
+                                                                             ->  Parallel Hash
+                                                                                   ->  Parallel Seq Scan on date_dim d2
+                                                                                         Filter: ((d_year >= 1998) AND (d_year <= 2000))
+                                                                       ->  Parallel Hash
+                                                                             ->  Parallel Seq Scan on item ics
+                                   ->  Subquery Scan on "*SELECT* 3"
+                                         ->  Gather
+                                               Workers Planned: 2
+                                               ->  Parallel Hash Join
+                                                     Hash Cond: (web_sales_1.ws_item_sk = iws.i_item_sk)
+                                                     ->  Parallel Hash Join
+                                                           Hash Cond: (web_sales_1.ws_sold_date_sk = d3.d_date_sk)
+                                                           ->  Parallel Seq Scan on web_sales web_sales_1
+                                                           ->  Parallel Hash
+                                                                 ->  Parallel Seq Scan on date_dim d3
+                                                                       Filter: ((d_year >= 1998) AND (d_year <= 2000))
+                                                     ->  Parallel Hash
+                                                           ->  Parallel Seq Scan on item iws
+   CTE avg_sales
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Append
+                             ->  Parallel Hash Join
+                                   Hash Cond: (store_sales_2.ss_sold_date_sk = date_dim_3.d_date_sk)
+                                   ->  Parallel Seq Scan on store_sales store_sales_2
+                                   ->  Parallel Hash
+                                         ->  Parallel Seq Scan on date_dim date_dim_3
+                                               Filter: ((d_year >= 1998) AND (d_year <= 2000))
+                             ->  Parallel Hash Join
+                                   Hash Cond: (catalog_sales_2.cs_sold_date_sk = date_dim_4.d_date_sk)
+                                   ->  Parallel Seq Scan on catalog_sales catalog_sales_2
+                                   ->  Parallel Hash
+                                         ->  Parallel Seq Scan on date_dim date_dim_4
+                                               Filter: ((d_year >= 1998) AND (d_year <= 2000))
+                             ->  Parallel Hash Join
+                                   Hash Cond: (web_sales_2.ws_sold_date_sk = date_dim_5.d_date_sk)
+                                   ->  Parallel Seq Scan on web_sales web_sales_2
+                                   ->  Parallel Hash
+                                         ->  Parallel Seq Scan on date_dim date_dim_5
+                                               Filter: ((d_year >= 1998) AND (d_year <= 2000))
+   ->  GroupAggregate
+         Group Key: ('store'::text), item.i_brand_id, item.i_class_id, item.i_category_id
+         Group Key: ('store'::text), item.i_brand_id, item.i_class_id
+         Group Key: ('store'::text), item.i_brand_id
+         Group Key: ('store'::text)
+         Group Key: ()
+         ->  Sort
+               Sort Key: ('store'::text), item.i_brand_id, item.i_class_id, item.i_category_id
+               ->  Append
+                     ->  GroupAggregate
+                           Group Key: item.i_brand_id, item.i_class_id, item.i_category_id
+                           Filter: (sum(((store_sales.ss_quantity)::numeric * store_sales.ss_list_price)) > (InitPlan 3).col1)
+                           InitPlan 3
+                             ->  CTE Scan on avg_sales
+                           ->  Sort
+                                 Sort Key: item.i_brand_id, item.i_class_id, item.i_category_id
+                                 ->  Nested Loop
+                                       ->  Nested Loop
+                                             ->  Nested Loop
+                                                   ->  HashAggregate
+                                                         Group Key: cross_items.ss_item_sk
+                                                         ->  CTE Scan on cross_items
+                                                   ->  Index Scan using item_pkey on item
+                                                         Index Cond: (i_item_sk = cross_items.ss_item_sk)
+                                             ->  Index Scan using store_sales_pkey on store_sales
+                                                   Index Cond: (ss_item_sk = item.i_item_sk)
+                                       ->  Memoize
+                                             Cache Key: store_sales.ss_sold_date_sk
+                                             Cache Mode: logical
+                                             ->  Index Scan using date_dim_pkey on date_dim
+                                                   Index Cond: (d_date_sk = store_sales.ss_sold_date_sk)
+                                                   Filter: ((d_year = 2000) AND (d_moy = 11))
+                     ->  GroupAggregate
+                           Group Key: item_1.i_brand_id, item_1.i_class_id, item_1.i_category_id
+                           Filter: (sum(((catalog_sales.cs_quantity)::numeric * catalog_sales.cs_list_price)) > (InitPlan 4).col1)
+                           InitPlan 4
+                             ->  CTE Scan on avg_sales avg_sales_1
+                           ->  Sort
+                                 Sort Key: item_1.i_brand_id, item_1.i_class_id, item_1.i_category_id
+                                 ->  Nested Loop
+                                       ->  Nested Loop
+                                             ->  Nested Loop
+                                                   ->  HashAggregate
+                                                         Group Key: cross_items_1.ss_item_sk
+                                                         ->  CTE Scan on cross_items cross_items_1
+                                                   ->  Index Scan using item_pkey on item item_1
+                                                         Index Cond: (i_item_sk = cross_items_1.ss_item_sk)
+                                             ->  Index Scan using catalog_sales_pkey on catalog_sales
+                                                   Index Cond: (cs_item_sk = item_1.i_item_sk)
+                                       ->  Memoize
+                                             Cache Key: catalog_sales.cs_sold_date_sk
+                                             Cache Mode: logical
+                                             ->  Index Scan using date_dim_pkey on date_dim date_dim_1
+                                                   Index Cond: (d_date_sk = catalog_sales.cs_sold_date_sk)
+                                                   Filter: ((d_year = 2000) AND (d_moy = 11))
+                     ->  GroupAggregate
+                           Group Key: item_2.i_brand_id, item_2.i_class_id, item_2.i_category_id
+                           Filter: (sum(((web_sales.ws_quantity)::numeric * web_sales.ws_list_price)) > (InitPlan 5).col1)
+                           InitPlan 5
+                             ->  CTE Scan on avg_sales avg_sales_2
+                           ->  Sort
+                                 Sort Key: item_2.i_brand_id, item_2.i_class_id, item_2.i_category_id
+                                 ->  Nested Loop
+                                       ->  Nested Loop
+                                             ->  Nested Loop
+                                                   ->  HashAggregate
+                                                         Group Key: cross_items_2.ss_item_sk
+                                                         ->  CTE Scan on cross_items cross_items_2
+                                                   ->  Index Scan using item_pkey on item item_2
+                                                         Index Cond: (i_item_sk = cross_items_2.ss_item_sk)
+                                             ->  Index Scan using web_sales_pkey on web_sales
+                                                   Index Cond: (ws_item_sk = item_2.i_item_sk)
+                                       ->  Memoize
+                                             Cache Key: web_sales.ws_sold_date_sk
+                                             Cache Mode: logical
+                                             ->  Index Scan using date_dim_pkey on date_dim date_dim_2
+                                                   Index Cond: (d_date_sk = web_sales.ws_sold_date_sk)
+                                                   Filter: ((d_year = 2000) AND (d_moy = 11))
+(153 rows)
+

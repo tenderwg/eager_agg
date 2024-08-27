@@ -1,0 +1,41 @@
+                                                                                                                                                                        QUERY PLAN                                                                                                                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: ((tmp1.sum_sales - tmp1.avg_monthly_sales)), tmp1.s_store_name
+         ->  Subquery Scan on tmp1
+               Filter: (CASE WHEN (tmp1.avg_monthly_sales <> '0'::numeric) THEN (abs((tmp1.sum_sales - tmp1.avg_monthly_sales)) / tmp1.avg_monthly_sales) ELSE NULL::numeric END > 0.1)
+               ->  WindowAgg
+                     ->  Incremental Sort
+                           Sort Key: item.i_category, item.i_brand, store.s_store_name, store.s_company_name
+                           Presorted Key: item.i_category
+                           ->  Finalize GroupAggregate
+                                 Group Key: item.i_category, item.i_class, item.i_brand, store.s_store_name, store.s_company_name, date_dim.d_moy
+                                 ->  Gather Merge
+                                       Workers Planned: 2
+                                       ->  Incremental Sort
+                                             Sort Key: item.i_category, item.i_class, item.i_brand, store.s_store_name, store.s_company_name, date_dim.d_moy
+                                             Presorted Key: item.i_category, item.i_class, item.i_brand
+                                             ->  Nested Loop
+                                                   ->  Partial GroupAggregate
+                                                         Group Key: item.i_category, item.i_class, item.i_brand, date_dim.d_moy, store_sales.ss_store_sk
+                                                         ->  Sort
+                                                               Sort Key: item.i_category, item.i_class, item.i_brand, date_dim.d_moy, store_sales.ss_store_sk
+                                                               ->  Parallel Hash Join
+                                                                     Hash Cond: (store_sales.ss_item_sk = item.i_item_sk)
+                                                                     ->  Parallel Hash Join
+                                                                           Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                                           ->  Parallel Seq Scan on store_sales
+                                                                           ->  Parallel Hash
+                                                                                 ->  Parallel Seq Scan on date_dim
+                                                                                       Filter: (d_year = 2002)
+                                                                     ->  Parallel Hash
+                                                                           ->  Parallel Seq Scan on item
+                                                                                 Filter: (((i_category = ANY ('{Women,Music,Children}'::bpchar[])) AND (i_class = ANY ('{dresses,classical,school-uniforms}'::bpchar[]))) OR ((i_category = ANY ('{Jewelry,Sports,Electronics}'::bpchar[])) AND (i_class = ANY ('{pendants,camping,musical}'::bpchar[]))))
+                                                   ->  Memoize
+                                                         Cache Key: store_sales.ss_store_sk
+                                                         Cache Mode: logical
+                                                         ->  Index Scan using store_pkey on store
+                                                               Index Cond: (s_store_sk = store_sales.ss_store_sk)
+(37 rows)
+

@@ -1,0 +1,71 @@
+                                                                                                                            QUERY PLAN                                                                                                                            
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: ((ss3.store_sales / ss2.store_sales))
+   CTE ss
+     ->  Finalize GroupAggregate
+           Group Key: customer_address.ca_county, date_dim.d_qoy, date_dim.d_year
+           ->  Gather Merge
+                 Workers Planned: 2
+                 ->  Sort
+                       Sort Key: customer_address.ca_county, date_dim.d_qoy, date_dim.d_year
+                       ->  Parallel Hash Join
+                             Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                             ->  Parallel Hash Join
+                                   Hash Cond: (store_sales.ss_addr_sk = customer_address.ca_address_sk)
+                                   ->  Partial HashAggregate
+                                         Group Key: store_sales.ss_sold_date_sk, store_sales.ss_addr_sk
+                                         ->  Parallel Seq Scan on store_sales
+                                   ->  Parallel Hash
+                                         ->  Parallel Seq Scan on customer_address
+                             ->  Parallel Hash
+                                   ->  Parallel Seq Scan on date_dim
+   CTE ws
+     ->  Finalize GroupAggregate
+           Group Key: customer_address_1.ca_county, date_dim_1.d_qoy, date_dim_1.d_year
+           ->  Gather Merge
+                 Workers Planned: 2
+                 ->  Sort
+                       Sort Key: customer_address_1.ca_county, date_dim_1.d_qoy, date_dim_1.d_year
+                       ->  Parallel Hash Join
+                             Hash Cond: (web_sales.ws_sold_date_sk = date_dim_1.d_date_sk)
+                             ->  Parallel Hash Join
+                                   Hash Cond: (web_sales.ws_bill_addr_sk = customer_address_1.ca_address_sk)
+                                   ->  Partial HashAggregate
+                                         Group Key: web_sales.ws_sold_date_sk, web_sales.ws_bill_addr_sk
+                                         ->  Parallel Seq Scan on web_sales
+                                   ->  Parallel Hash
+                                         ->  Parallel Seq Scan on customer_address customer_address_1
+                             ->  Parallel Hash
+                                   ->  Parallel Seq Scan on date_dim date_dim_1
+   ->  Merge Join
+         Merge Cond: ((ws3.ca_county)::text = (ss1.ca_county)::text)
+         Join Filter: (CASE WHEN (ws2.web_sales > '0'::numeric) THEN (ws3.web_sales / ws2.web_sales) ELSE NULL::numeric END > CASE WHEN (ss2.store_sales > '0'::numeric) THEN (ss3.store_sales / ss2.store_sales) ELSE NULL::numeric END)
+         ->  CTE Scan on ws ws3
+               Filter: ((d_year = 2000) AND (d_qoy = 3))
+         ->  Materialize
+               ->  Merge Join
+                     Merge Cond: ((ss3.ca_county)::text = (ss1.ca_county)::text)
+                     ->  CTE Scan on ss ss3
+                           Filter: ((d_year = 2000) AND (d_qoy = 3))
+                     ->  Materialize
+                           ->  Merge Join
+                                 Merge Cond: ((ss2.ca_county)::text = (ss1.ca_county)::text)
+                                 Join Filter: (CASE WHEN (ws1.web_sales > '0'::numeric) THEN (ws2.web_sales / ws1.web_sales) ELSE NULL::numeric END > CASE WHEN (ss1.store_sales > '0'::numeric) THEN (ss2.store_sales / ss1.store_sales) ELSE NULL::numeric END)
+                                 ->  CTE Scan on ss ss2
+                                       Filter: ((d_year = 2000) AND (d_qoy = 2))
+                                 ->  Materialize
+                                       ->  Merge Join
+                                             Merge Cond: ((ss1.ca_county)::text = (ws1.ca_county)::text)
+                                             ->  CTE Scan on ss ss1
+                                                   Filter: ((d_qoy = 1) AND (d_year = 2000))
+                                             ->  Materialize
+                                                   ->  Merge Join
+                                                         Merge Cond: ((ws1.ca_county)::text = (ws2.ca_county)::text)
+                                                         ->  CTE Scan on ws ws1
+                                                               Filter: ((d_qoy = 1) AND (d_year = 2000))
+                                                         ->  Materialize
+                                                               ->  CTE Scan on ws ws2
+                                                                     Filter: ((d_year = 2000) AND (d_qoy = 2))
+(67 rows)
+

@@ -1,0 +1,59 @@
+                                                             QUERY PLAN                                                             
+------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Nested Loop
+         Join Filter: (i2.i_item_sk = v21.item_sk)
+         ->  Nested Loop
+               Join Filter: (i1.i_item_sk = v11.item_sk)
+               ->  Merge Join
+                     Merge Cond: (v11.rnk = v21.rnk)
+                     ->  Sort
+                           Sort Key: v11.rnk
+                           ->  Subquery Scan on v11
+                                 ->  WindowAgg
+                                       Run Condition: (rank() OVER (?) < 11)
+                                       ->  Sort
+                                             Sort Key: v1.rank_col
+                                             ->  Subquery Scan on v1
+                                                   ->  GroupAggregate
+                                                         Group Key: ss1.ss_item_sk
+                                                         Filter: (avg(ss1.ss_net_profit) > (0.9 * (InitPlan 1).col1))
+                                                         InitPlan 1
+                                                           ->  GroupAggregate
+                                                                 ->  Gather
+                                                                       Workers Planned: 2
+                                                                       ->  Parallel Seq Scan on store_sales
+                                                                             Filter: ((ss_cdemo_sk IS NULL) AND (ss_store_sk = 29))
+                                                         ->  Sort
+                                                               Sort Key: ss1.ss_item_sk
+                                                               ->  Gather
+                                                                     Workers Planned: 2
+                                                                     ->  Parallel Seq Scan on store_sales ss1
+                                                                           Filter: (ss_store_sk = 29)
+                     ->  Sort
+                           Sort Key: v21.rnk
+                           ->  Subquery Scan on v21
+                                 ->  WindowAgg
+                                       Run Condition: (rank() OVER (?) < 11)
+                                       ->  Sort
+                                             Sort Key: v2.rank_col DESC
+                                             ->  Subquery Scan on v2
+                                                   ->  GroupAggregate
+                                                         Group Key: ss1_1.ss_item_sk
+                                                         Filter: (avg(ss1_1.ss_net_profit) > (0.9 * (InitPlan 2).col1))
+                                                         InitPlan 2
+                                                           ->  GroupAggregate
+                                                                 ->  Gather
+                                                                       Workers Planned: 2
+                                                                       ->  Parallel Seq Scan on store_sales store_sales_1
+                                                                             Filter: ((ss_cdemo_sk IS NULL) AND (ss_store_sk = 29))
+                                                         ->  Sort
+                                                               Sort Key: ss1_1.ss_item_sk
+                                                               ->  Gather
+                                                                     Workers Planned: 2
+                                                                     ->  Parallel Seq Scan on store_sales ss1_1
+                                                                           Filter: (ss_store_sk = 29)
+               ->  Seq Scan on item i1
+         ->  Seq Scan on item i2
+(55 rows)
+

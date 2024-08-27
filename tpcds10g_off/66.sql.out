@@ -1,0 +1,64 @@
+                                                                                               QUERY PLAN                                                                                                
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  GroupAggregate
+         Group Key: warehouse.w_warehouse_name, warehouse.w_warehouse_sq_ft, warehouse.w_city, warehouse.w_county, warehouse.w_state, warehouse.w_country, ('RUPEKSA,USPS'::text), date_dim.d_year
+         ->  Sort
+               Sort Key: warehouse.w_warehouse_name, warehouse.w_warehouse_sq_ft, warehouse.w_city, warehouse.w_county, warehouse.w_state, warehouse.w_country, ('RUPEKSA,USPS'::text), date_dim.d_year
+               ->  Append
+                     ->  Finalize GroupAggregate
+                           Group Key: warehouse.w_warehouse_name, warehouse.w_warehouse_sq_ft, warehouse.w_city, warehouse.w_county, warehouse.w_state, warehouse.w_country
+                           ->  Gather Merge
+                                 Workers Planned: 2
+                                 ->  Partial GroupAggregate
+                                       Group Key: warehouse.w_warehouse_name, warehouse.w_warehouse_sq_ft, warehouse.w_city, warehouse.w_county, warehouse.w_state, warehouse.w_country
+                                       ->  Sort
+                                             Sort Key: warehouse.w_warehouse_name, warehouse.w_warehouse_sq_ft, warehouse.w_city, warehouse.w_county, warehouse.w_state, warehouse.w_country
+                                             ->  Hash Join
+                                                   Hash Cond: (web_sales.ws_warehouse_sk = warehouse.w_warehouse_sk)
+                                                   ->  Nested Loop
+                                                         ->  Hash Join
+                                                               Hash Cond: (web_sales.ws_ship_mode_sk = ship_mode.sm_ship_mode_sk)
+                                                               ->  Parallel Hash Join
+                                                                     Hash Cond: (web_sales.ws_sold_date_sk = date_dim.d_date_sk)
+                                                                     ->  Parallel Seq Scan on web_sales
+                                                                     ->  Parallel Hash
+                                                                           ->  Parallel Seq Scan on date_dim
+                                                                                 Filter: (d_year = 2002)
+                                                               ->  Hash
+                                                                     ->  Seq Scan on ship_mode
+                                                                           Filter: (sm_carrier = ANY ('{RUPEKSA,USPS}'::bpchar[]))
+                                                         ->  Index Scan using time_dim_pkey on time_dim
+                                                               Index Cond: (t_time_sk = web_sales.ws_sold_time_sk)
+                                                               Filter: ((t_time >= 23285) AND (t_time <= 52085))
+                                                   ->  Hash
+                                                         ->  Seq Scan on warehouse
+                     ->  Finalize GroupAggregate
+                           Group Key: warehouse_1.w_warehouse_name, warehouse_1.w_warehouse_sq_ft, warehouse_1.w_city, warehouse_1.w_county, warehouse_1.w_state, warehouse_1.w_country
+                           ->  Gather Merge
+                                 Workers Planned: 2
+                                 ->  Partial GroupAggregate
+                                       Group Key: warehouse_1.w_warehouse_name, warehouse_1.w_warehouse_sq_ft, warehouse_1.w_city, warehouse_1.w_county, warehouse_1.w_state, warehouse_1.w_country
+                                       ->  Sort
+                                             Sort Key: warehouse_1.w_warehouse_name, warehouse_1.w_warehouse_sq_ft, warehouse_1.w_city, warehouse_1.w_county, warehouse_1.w_state, warehouse_1.w_country
+                                             ->  Hash Join
+                                                   Hash Cond: (catalog_sales.cs_warehouse_sk = warehouse_1.w_warehouse_sk)
+                                                   ->  Nested Loop
+                                                         ->  Hash Join
+                                                               Hash Cond: (catalog_sales.cs_ship_mode_sk = ship_mode_1.sm_ship_mode_sk)
+                                                               ->  Parallel Hash Join
+                                                                     Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_1.d_date_sk)
+                                                                     ->  Parallel Seq Scan on catalog_sales
+                                                                     ->  Parallel Hash
+                                                                           ->  Parallel Seq Scan on date_dim date_dim_1
+                                                                                 Filter: (d_year = 2002)
+                                                               ->  Hash
+                                                                     ->  Seq Scan on ship_mode ship_mode_1
+                                                                           Filter: (sm_carrier = ANY ('{RUPEKSA,USPS}'::bpchar[]))
+                                                         ->  Index Scan using time_dim_pkey on time_dim time_dim_1
+                                                               Index Cond: (t_time_sk = catalog_sales.cs_sold_time_sk)
+                                                               Filter: ((t_time >= 23285) AND (t_time <= 52085))
+                                                   ->  Hash
+                                                         ->  Seq Scan on warehouse warehouse_1
+(60 rows)
+

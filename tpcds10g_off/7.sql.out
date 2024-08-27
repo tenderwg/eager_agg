@@ -1,0 +1,32 @@
+                                                                                QUERY PLAN                                                                                 
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  GroupAggregate
+         Group Key: item.i_item_id
+         ->  Nested Loop
+               Join Filter: (store_sales.ss_item_sk = item.i_item_sk)
+               ->  Gather Merge
+                     Workers Planned: 2
+                     ->  Sort
+                           Sort Key: item.i_item_id
+                           ->  Parallel Seq Scan on item
+               ->  Materialize
+                     ->  Nested Loop
+                           ->  Gather
+                                 Workers Planned: 2
+                                 ->  Parallel Hash Join
+                                       Hash Cond: (store_sales.ss_cdemo_sk = customer_demographics.cd_demo_sk)
+                                       ->  Parallel Hash Join
+                                             Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                             ->  Parallel Seq Scan on store_sales
+                                             ->  Parallel Hash
+                                                   ->  Parallel Seq Scan on date_dim
+                                                         Filter: (d_year = 2001)
+                                       ->  Parallel Hash
+                                             ->  Parallel Seq Scan on customer_demographics
+                                                   Filter: ((cd_gender = 'F'::bpchar) AND (cd_marital_status = 'W'::bpchar) AND (cd_education_status = 'College'::bpchar))
+                           ->  Index Scan using promotion_pkey on promotion
+                                 Index Cond: (p_promo_sk = store_sales.ss_promo_sk)
+                                 Filter: ((p_channel_email = 'N'::bpchar) OR (p_channel_event = 'N'::bpchar))
+(28 rows)
+

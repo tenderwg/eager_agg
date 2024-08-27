@@ -1,0 +1,111 @@
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Seq Scan on reason
+   Filter: (r_reason_sk = 1)
+   InitPlan 1
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales
+                             Filter: ((ss_quantity >= 1) AND (ss_quantity <= 20))
+   InitPlan 2
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_1
+                             Filter: ((ss_quantity >= 1) AND (ss_quantity <= 20))
+   InitPlan 3
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_2
+                             Filter: ((ss_quantity >= 1) AND (ss_quantity <= 20))
+   InitPlan 4
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_3
+                             Filter: ((ss_quantity >= 21) AND (ss_quantity <= 40))
+   InitPlan 5
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_4
+                             Filter: ((ss_quantity >= 21) AND (ss_quantity <= 40))
+   InitPlan 6
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_5
+                             Filter: ((ss_quantity >= 21) AND (ss_quantity <= 40))
+   InitPlan 7
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_6
+                             Filter: ((ss_quantity >= 41) AND (ss_quantity <= 60))
+   InitPlan 8
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_7
+                             Filter: ((ss_quantity >= 41) AND (ss_quantity <= 60))
+   InitPlan 9
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_8
+                             Filter: ((ss_quantity >= 41) AND (ss_quantity <= 60))
+   InitPlan 10
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_9
+                             Filter: ((ss_quantity >= 61) AND (ss_quantity <= 80))
+   InitPlan 11
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_10
+                             Filter: ((ss_quantity >= 61) AND (ss_quantity <= 80))
+   InitPlan 12
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_11
+                             Filter: ((ss_quantity >= 61) AND (ss_quantity <= 80))
+   InitPlan 13
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_12
+                             Filter: ((ss_quantity >= 81) AND (ss_quantity <= 100))
+   InitPlan 14
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_13
+                             Filter: ((ss_quantity >= 81) AND (ss_quantity <= 100))
+   InitPlan 15
+     ->  Finalize Aggregate
+           ->  Gather
+                 Workers Planned: 2
+                 ->  Partial Aggregate
+                       ->  Parallel Seq Scan on store_sales store_sales_14
+                             Filter: ((ss_quantity >= 81) AND (ss_quantity <= 100))
+(107 rows)
+

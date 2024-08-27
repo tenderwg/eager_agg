@@ -1,0 +1,31 @@
+                                                           QUERY PLAN                                                            
+---------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Finalize GroupAggregate
+         Group Key: (substr((warehouse.w_warehouse_name)::text, 1, 20)), ship_mode.sm_type, call_center.cc_name
+         ->  Gather Merge
+               Workers Planned: 2
+               ->  Partial GroupAggregate
+                     Group Key: (substr((warehouse.w_warehouse_name)::text, 1, 20)), ship_mode.sm_type, call_center.cc_name
+                     ->  Sort
+                           Sort Key: (substr((warehouse.w_warehouse_name)::text, 1, 20)), ship_mode.sm_type, call_center.cc_name
+                           ->  Hash Join
+                                 Hash Cond: (catalog_sales.cs_warehouse_sk = warehouse.w_warehouse_sk)
+                                 ->  Hash Join
+                                       Hash Cond: (catalog_sales.cs_ship_mode_sk = ship_mode.sm_ship_mode_sk)
+                                       ->  Hash Join
+                                             Hash Cond: (catalog_sales.cs_call_center_sk = call_center.cc_call_center_sk)
+                                             ->  Parallel Hash Join
+                                                   Hash Cond: (catalog_sales.cs_ship_date_sk = date_dim.d_date_sk)
+                                                   ->  Parallel Seq Scan on catalog_sales
+                                                   ->  Parallel Hash
+                                                         ->  Parallel Seq Scan on date_dim
+                                                               Filter: ((d_month_seq >= 1211) AND (d_month_seq <= 1222))
+                                             ->  Hash
+                                                   ->  Seq Scan on call_center
+                                       ->  Hash
+                                             ->  Seq Scan on ship_mode
+                                 ->  Hash
+                                       ->  Seq Scan on warehouse
+(27 rows)
+

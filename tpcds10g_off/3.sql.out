@@ -1,0 +1,28 @@
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ Limit
+   ->  Incremental Sort
+         Sort Key: dt.d_year, (sum(store_sales.ss_sales_price)) DESC, item.i_brand_id
+         Presorted Key: dt.d_year
+         ->  GroupAggregate
+               Group Key: dt.d_year, item.i_brand, item.i_brand_id
+               ->  Gather Merge
+                     Workers Planned: 2
+                     ->  Sort
+                           Sort Key: dt.d_year, item.i_brand, item.i_brand_id
+                           ->  Nested Loop
+                                 ->  Nested Loop
+                                       ->  Parallel Seq Scan on item
+                                             Filter: (i_manufact_id = 816)
+                                       ->  Bitmap Heap Scan on store_sales
+                                             Recheck Cond: (ss_item_sk = item.i_item_sk)
+                                             ->  Bitmap Index Scan on store_sales_pkey
+                                                   Index Cond: (ss_item_sk = item.i_item_sk)
+                                 ->  Memoize
+                                       Cache Key: store_sales.ss_sold_date_sk
+                                       Cache Mode: logical
+                                       ->  Index Scan using date_dim_pkey on date_dim dt
+                                             Index Cond: (d_date_sk = store_sales.ss_sold_date_sk)
+                                             Filter: (d_moy = 11)
+(24 rows)
+

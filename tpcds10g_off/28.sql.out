@@ -1,0 +1,52 @@
+                                                                                                                                                                          QUERY PLAN                                                                                                                                                                           
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Nested Loop
+         ->  Nested Loop
+               ->  Nested Loop
+                     ->  Nested Loop
+                           ->  Nested Loop
+                                 ->  Aggregate
+                                       ->  Gather Merge
+                                             Workers Planned: 2
+                                             ->  Sort
+                                                   Sort Key: store_sales.ss_list_price
+                                                   ->  Parallel Seq Scan on store_sales
+                                                         Filter: ((ss_quantity >= 0) AND (ss_quantity <= 5) AND (((ss_list_price >= '32'::numeric) AND (ss_list_price <= '42'::numeric)) OR ((ss_coupon_amt >= '4429'::numeric) AND (ss_coupon_amt <= '5429'::numeric)) OR ((ss_wholesale_cost >= '0'::numeric) AND (ss_wholesale_cost <= '20'::numeric))))
+                                 ->  Aggregate
+                                       ->  Gather Merge
+                                             Workers Planned: 2
+                                             ->  Sort
+                                                   Sort Key: store_sales_1.ss_list_price
+                                                   ->  Parallel Seq Scan on store_sales store_sales_1
+                                                         Filter: ((ss_quantity >= 6) AND (ss_quantity <= 10) AND (((ss_list_price >= '170'::numeric) AND (ss_list_price <= '180'::numeric)) OR ((ss_coupon_amt >= '4727'::numeric) AND (ss_coupon_amt <= '5727'::numeric)) OR ((ss_wholesale_cost >= '8'::numeric) AND (ss_wholesale_cost <= '28'::numeric))))
+                           ->  Aggregate
+                                 ->  Gather Merge
+                                       Workers Planned: 2
+                                       ->  Sort
+                                             Sort Key: store_sales_2.ss_list_price
+                                             ->  Parallel Seq Scan on store_sales store_sales_2
+                                                   Filter: ((ss_quantity >= 11) AND (ss_quantity <= 15) AND (((ss_list_price >= '124'::numeric) AND (ss_list_price <= '134'::numeric)) OR ((ss_coupon_amt >= '9657'::numeric) AND (ss_coupon_amt <= '10657'::numeric)) OR ((ss_wholesale_cost >= '43'::numeric) AND (ss_wholesale_cost <= '63'::numeric))))
+                     ->  Aggregate
+                           ->  Gather Merge
+                                 Workers Planned: 2
+                                 ->  Sort
+                                       Sort Key: store_sales_3.ss_list_price
+                                       ->  Parallel Seq Scan on store_sales store_sales_3
+                                             Filter: ((ss_quantity >= 16) AND (ss_quantity <= 20) AND (((ss_list_price >= '104'::numeric) AND (ss_list_price <= '114'::numeric)) OR ((ss_coupon_amt >= '17161'::numeric) AND (ss_coupon_amt <= '18161'::numeric)) OR ((ss_wholesale_cost >= '34'::numeric) AND (ss_wholesale_cost <= '54'::numeric))))
+               ->  Aggregate
+                     ->  Gather Merge
+                           Workers Planned: 2
+                           ->  Sort
+                                 Sort Key: store_sales_4.ss_list_price
+                                 ->  Parallel Seq Scan on store_sales store_sales_4
+                                       Filter: ((ss_quantity >= 21) AND (ss_quantity <= 25) AND (((ss_list_price >= '73'::numeric) AND (ss_list_price <= '83'::numeric)) OR ((ss_coupon_amt >= '17064'::numeric) AND (ss_coupon_amt <= '18064'::numeric)) OR ((ss_wholesale_cost >= '56'::numeric) AND (ss_wholesale_cost <= '76'::numeric))))
+         ->  Aggregate
+               ->  Gather Merge
+                     Workers Planned: 2
+                     ->  Sort
+                           Sort Key: store_sales_5.ss_list_price
+                           ->  Parallel Seq Scan on store_sales store_sales_5
+                                 Filter: ((ss_quantity >= 26) AND (ss_quantity <= 30) AND (((ss_list_price >= '65'::numeric) AND (ss_list_price <= '75'::numeric)) OR ((ss_coupon_amt >= '10899'::numeric) AND (ss_coupon_amt <= '11899'::numeric)) OR ((ss_wholesale_cost >= '54'::numeric) AND (ss_wholesale_cost <= '74'::numeric))))
+(48 rows)
+

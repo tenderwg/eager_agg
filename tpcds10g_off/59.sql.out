@@ -1,0 +1,46 @@
+                                                    QUERY PLAN                                                     
+-------------------------------------------------------------------------------------------------------------------
+ Limit
+   CTE wss
+     ->  Finalize GroupAggregate
+           Group Key: date_dim.d_week_seq, store_sales.ss_store_sk
+           ->  Gather Merge
+                 Workers Planned: 2
+                 ->  Sort
+                       Sort Key: date_dim.d_week_seq, store_sales.ss_store_sk
+                       ->  Partial HashAggregate
+                             Group Key: date_dim.d_week_seq, store_sales.ss_store_sk
+                             ->  Parallel Hash Join
+                                   Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                   ->  Parallel Seq Scan on store_sales
+                                   ->  Parallel Hash
+                                         ->  Parallel Seq Scan on date_dim
+   ->  Sort
+         Sort Key: store.s_store_name, store.s_store_id, wss.d_week_seq
+         ->  Hash Join
+               Hash Cond: ((wss.ss_store_sk = store.s_store_sk) AND (store_1.s_store_id = store.s_store_id))
+               ->  Merge Join
+                     Merge Cond: (wss.d_week_seq = d.d_week_seq)
+                     ->  CTE Scan on wss
+                     ->  Sort
+                           Sort Key: d.d_week_seq
+                           ->  Hash Join
+                                 Hash Cond: ((wss_1.d_week_seq - 52) = d.d_week_seq)
+                                 ->  Hash Join
+                                       Hash Cond: (wss_1.ss_store_sk = store_1.s_store_sk)
+                                       ->  Merge Join
+                                             Merge Cond: (wss_1.d_week_seq = d_1.d_week_seq)
+                                             ->  CTE Scan on wss wss_1
+                                             ->  Sort
+                                                   Sort Key: d_1.d_week_seq
+                                                   ->  Seq Scan on date_dim d_1
+                                                         Filter: ((d_month_seq >= 1217) AND (d_month_seq <= 1228))
+                                       ->  Hash
+                                             ->  Seq Scan on store store_1
+                                 ->  Hash
+                                       ->  Seq Scan on date_dim d
+                                             Filter: ((d_month_seq >= 1205) AND (d_month_seq <= 1216))
+               ->  Hash
+                     ->  Seq Scan on store
+(42 rows)
+

@@ -1,0 +1,54 @@
+                                                                           QUERY PLAN                                                                            
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: (count(*)) DESC, item.i_item_desc, warehouse.w_warehouse_name, d1.d_week_seq
+         ->  GroupAggregate
+               Group Key: item.i_item_desc, warehouse.w_warehouse_name, d1.d_week_seq
+               ->  Sort
+                     Sort Key: item.i_item_desc, warehouse.w_warehouse_name, d1.d_week_seq
+                     ->  Nested Loop Left Join
+                           Join Filter: (catalog_sales.cs_promo_sk = promotion.p_promo_sk)
+                           ->  Gather Merge
+                                 Workers Planned: 2
+                                 ->  Nested Loop
+                                       Join Filter: (d3.d_date > (d1.d_date + 5))
+                                       ->  Nested Loop
+                                             ->  Nested Loop
+                                                   Join Filter: (inventory.inv_warehouse_sk = warehouse.w_warehouse_sk)
+                                                   ->  Nested Loop
+                                                         ->  Merge Join
+                                                               Merge Cond: (d1.d_week_seq = d2.d_week_seq)
+                                                               ->  Sort
+                                                                     Sort Key: d1.d_week_seq
+                                                                     ->  Nested Loop
+                                                                           ->  Hash Join
+                                                                                 Hash Cond: (catalog_sales.cs_bill_hdemo_sk = household_demographics.hd_demo_sk)
+                                                                                 ->  Parallel Hash Join
+                                                                                       Hash Cond: (catalog_sales.cs_sold_date_sk = d1.d_date_sk)
+                                                                                       ->  Parallel Seq Scan on catalog_sales
+                                                                                       ->  Parallel Hash
+                                                                                             ->  Parallel Seq Scan on date_dim d1
+                                                                                                   Filter: (d_year = 2001)
+                                                                                 ->  Hash
+                                                                                       ->  Seq Scan on household_demographics
+                                                                                             Filter: (hd_buy_potential = '501-1000'::bpchar)
+                                                                           ->  Index Scan using customer_demographics_pkey on customer_demographics
+                                                                                 Index Cond: (cd_demo_sk = catalog_sales.cs_bill_cdemo_sk)
+                                                                                 Filter: (cd_marital_status = 'M'::bpchar)
+                                                               ->  Sort
+                                                                     Sort Key: d2.d_week_seq
+                                                                     ->  Seq Scan on date_dim d2
+                                                         ->  Index Scan using inventory_pkey on inventory
+                                                               Index Cond: ((inv_date_sk = d2.d_date_sk) AND (inv_item_sk = catalog_sales.cs_item_sk))
+                                                               Filter: (inv_quantity_on_hand < catalog_sales.cs_quantity)
+                                                   ->  Materialize
+                                                         ->  Seq Scan on warehouse
+                                             ->  Index Scan using item_pkey on item
+                                                   Index Cond: (i_item_sk = catalog_sales.cs_item_sk)
+                                       ->  Index Scan using date_dim_pkey on date_dim d3
+                                             Index Cond: (d_date_sk = catalog_sales.cs_ship_date_sk)
+                           ->  Materialize
+                                 ->  Seq Scan on promotion
+(50 rows)
+

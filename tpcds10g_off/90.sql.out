@@ -1,0 +1,46 @@
+                                                         QUERY PLAN                                                          
+-----------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: ((((count(*)))::numeric(15,4) / ((count(*)))::numeric(15,4)))
+         ->  Nested Loop
+               ->  Finalize Aggregate
+                     ->  Gather
+                           Workers Planned: 2
+                           ->  Partial Aggregate
+                                 ->  Nested Loop
+                                       ->  Hash Join
+                                             Hash Cond: (web_sales.ws_ship_hdemo_sk = household_demographics.hd_demo_sk)
+                                             ->  Hash Join
+                                                   Hash Cond: (web_sales.ws_web_page_sk = web_page.wp_web_page_sk)
+                                                   ->  Parallel Seq Scan on web_sales
+                                                   ->  Hash
+                                                         ->  Seq Scan on web_page
+                                                               Filter: ((wp_char_count >= 5000) AND (wp_char_count <= 5200))
+                                             ->  Hash
+                                                   ->  Seq Scan on household_demographics
+                                                         Filter: (hd_dep_count = 2)
+                                       ->  Index Scan using time_dim_pkey on time_dim
+                                             Index Cond: (t_time_sk = web_sales.ws_sold_time_sk)
+                                             Filter: ((t_hour >= 8) AND (t_hour <= 9))
+               ->  Finalize Aggregate
+                     ->  Gather
+                           Workers Planned: 2
+                           ->  Partial Aggregate
+                                 ->  Nested Loop
+                                       ->  Hash Join
+                                             Hash Cond: (web_sales_1.ws_ship_hdemo_sk = household_demographics_1.hd_demo_sk)
+                                             ->  Hash Join
+                                                   Hash Cond: (web_sales_1.ws_web_page_sk = web_page_1.wp_web_page_sk)
+                                                   ->  Parallel Seq Scan on web_sales web_sales_1
+                                                   ->  Hash
+                                                         ->  Seq Scan on web_page web_page_1
+                                                               Filter: ((wp_char_count >= 5000) AND (wp_char_count <= 5200))
+                                             ->  Hash
+                                                   ->  Seq Scan on household_demographics household_demographics_1
+                                                         Filter: (hd_dep_count = 2)
+                                       ->  Index Scan using time_dim_pkey on time_dim time_dim_1
+                                             Index Cond: (t_time_sk = web_sales_1.ws_sold_time_sk)
+                                             Filter: ((t_hour >= 14) AND (t_hour <= 15))
+(42 rows)
+

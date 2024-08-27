@@ -1,0 +1,43 @@
+                                                          QUERY PLAN                                                           
+-------------------------------------------------------------------------------------------------------------------------------
+ Sort
+   Sort Key: (sum("*SELECT* 3".ext_price)) DESC, item.i_brand_id
+   ->  GroupAggregate
+         Group Key: item.i_brand, item.i_brand_id, time_dim.t_hour, time_dim.t_minute
+         ->  Gather Merge
+               Workers Planned: 2
+               ->  Sort
+                     Sort Key: item.i_brand, item.i_brand_id, time_dim.t_hour, time_dim.t_minute
+                     ->  Nested Loop
+                           ->  Parallel Hash Join
+                                 Hash Cond: ("*SELECT* 3".time_sk = time_dim.t_time_sk)
+                                 ->  Parallel Append
+                                       ->  Subquery Scan on "*SELECT* 3"
+                                             ->  Parallel Hash Join
+                                                   Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                   ->  Parallel Seq Scan on store_sales
+                                                   ->  Parallel Hash
+                                                         ->  Parallel Seq Scan on date_dim
+                                                               Filter: ((d_moy = 12) AND (d_year = 2000))
+                                       ->  Subquery Scan on "*SELECT* 2"
+                                             ->  Parallel Hash Join
+                                                   Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_1.d_date_sk)
+                                                   ->  Parallel Seq Scan on catalog_sales
+                                                   ->  Parallel Hash
+                                                         ->  Parallel Seq Scan on date_dim date_dim_1
+                                                               Filter: ((d_moy = 12) AND (d_year = 2000))
+                                       ->  Subquery Scan on "*SELECT* 1"
+                                             ->  Parallel Hash Join
+                                                   Hash Cond: (web_sales.ws_sold_date_sk = date_dim_2.d_date_sk)
+                                                   ->  Parallel Seq Scan on web_sales
+                                                   ->  Parallel Hash
+                                                         ->  Parallel Seq Scan on date_dim date_dim_2
+                                                               Filter: ((d_moy = 12) AND (d_year = 2000))
+                                 ->  Parallel Hash
+                                       ->  Parallel Seq Scan on time_dim
+                                             Filter: ((t_meal_time = 'breakfast'::bpchar) OR (t_meal_time = 'dinner'::bpchar))
+                           ->  Index Scan using item_pkey on item
+                                 Index Cond: (i_item_sk = "*SELECT* 3".sold_item_sk)
+                                 Filter: (i_manager_id = 1)
+(39 rows)
+

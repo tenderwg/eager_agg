@@ -1,0 +1,94 @@
+                                                                  QUERY PLAN                                                                   
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   CTE frequent_ss_items
+     ->  GroupAggregate
+           Group Key: (substr((item.i_item_desc)::text, 1, 30)), item.i_item_sk, date_dim_2.d_date
+           Filter: (count(*) > 4)
+           ->  Gather Merge
+                 Workers Planned: 2
+                 ->  Sort
+                       Sort Key: (substr((item.i_item_desc)::text, 1, 30)), item.i_item_sk, date_dim_2.d_date
+                       ->  Parallel Hash Join
+                             Hash Cond: (store_sales.ss_item_sk = item.i_item_sk)
+                             ->  Parallel Hash Join
+                                   Hash Cond: (store_sales.ss_sold_date_sk = date_dim_2.d_date_sk)
+                                   ->  Parallel Seq Scan on store_sales
+                                   ->  Parallel Hash
+                                         ->  Parallel Seq Scan on date_dim date_dim_2
+                                               Filter: (d_year = ANY ('{1999,2000,2001,2002}'::integer[]))
+                             ->  Parallel Hash
+                                   ->  Parallel Seq Scan on item
+   CTE best_ss_customer
+     ->  Finalize GroupAggregate
+           Group Key: customer_1.c_customer_sk
+           Filter: (sum(((store_sales_2.ss_quantity)::numeric * store_sales_2.ss_sales_price)) > (0.95000000000000000000 * (InitPlan 2).col1))
+           InitPlan 2
+             ->  Aggregate
+                   ->  GroupAggregate
+                         Group Key: customer.c_customer_sk
+                         ->  Gather Merge
+                               Workers Planned: 2
+                               ->  Sort
+                                     Sort Key: customer.c_customer_sk
+                                     ->  Parallel Hash Join
+                                           Hash Cond: (store_sales_1.ss_customer_sk = customer.c_customer_sk)
+                                           ->  Parallel Hash Join
+                                                 Hash Cond: (store_sales_1.ss_sold_date_sk = date_dim_3.d_date_sk)
+                                                 ->  Parallel Seq Scan on store_sales store_sales_1
+                                                 ->  Parallel Hash
+                                                       ->  Parallel Seq Scan on date_dim date_dim_3
+                                                             Filter: (d_year = ANY ('{1999,2000,2001,2002}'::integer[]))
+                                           ->  Parallel Hash
+                                                 ->  Parallel Seq Scan on customer
+           ->  Gather Merge
+                 Workers Planned: 2
+                 ->  Sort
+                       Sort Key: customer_1.c_customer_sk
+                       ->  Partial HashAggregate
+                             Group Key: customer_1.c_customer_sk
+                             ->  Parallel Hash Join
+                                   Hash Cond: (store_sales_2.ss_customer_sk = customer_1.c_customer_sk)
+                                   ->  Parallel Seq Scan on store_sales store_sales_2
+                                   ->  Parallel Hash
+                                         ->  Parallel Seq Scan on customer customer_1
+   ->  Aggregate
+         ->  Append
+               ->  Hash Join
+                     Hash Cond: (catalog_sales.cs_bill_customer_sk = best_ss_customer.c_customer_sk)
+                     ->  Hash Join
+                           Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim.d_date_sk)
+                           ->  Nested Loop
+                                 ->  HashAggregate
+                                       Group Key: frequent_ss_items.item_sk
+                                       ->  CTE Scan on frequent_ss_items
+                                 ->  Bitmap Heap Scan on catalog_sales
+                                       Recheck Cond: (cs_item_sk = frequent_ss_items.item_sk)
+                                       ->  Bitmap Index Scan on catalog_sales_pkey
+                                             Index Cond: (cs_item_sk = frequent_ss_items.item_sk)
+                           ->  Hash
+                                 ->  Seq Scan on date_dim
+                                       Filter: ((d_year = 1999) AND (d_moy = 7))
+                     ->  Hash
+                           ->  HashAggregate
+                                 Group Key: best_ss_customer.c_customer_sk
+                                 ->  CTE Scan on best_ss_customer
+               ->  Hash Join
+                     Hash Cond: (web_sales.ws_bill_customer_sk = best_ss_customer_1.c_customer_sk)
+                     ->  Hash Join
+                           Hash Cond: (web_sales.ws_sold_date_sk = date_dim_1.d_date_sk)
+                           ->  Nested Loop
+                                 ->  HashAggregate
+                                       Group Key: frequent_ss_items_1.item_sk
+                                       ->  CTE Scan on frequent_ss_items frequent_ss_items_1
+                                 ->  Index Scan using web_sales_pkey on web_sales
+                                       Index Cond: (ws_item_sk = frequent_ss_items_1.item_sk)
+                           ->  Hash
+                                 ->  Seq Scan on date_dim date_dim_1
+                                       Filter: ((d_year = 1999) AND (d_moy = 7))
+                     ->  Hash
+                           ->  HashAggregate
+                                 Group Key: best_ss_customer_1.c_customer_sk
+                                 ->  CTE Scan on best_ss_customer best_ss_customer_1
+(90 rows)
+

@@ -1,0 +1,87 @@
+                                                                                            QUERY PLAN                                                                                             
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Incremental Sort
+         Sort Key: ('web'::text), web.return_rank, web.currency_rank, web.item
+         Presorted Key: ('web'::text)
+         ->  Unique
+               ->  Sort
+                     Sort Key: ('web'::text), web.item, web.return_ratio, web.return_rank, web.currency_rank
+                     ->  Append
+                           ->  Subquery Scan on web
+                                 Filter: ((web.return_rank <= 10) OR (web.currency_rank <= 10))
+                                 ->  WindowAgg
+                                       ->  Sort
+                                             Sort Key: in_web.return_ratio
+                                             ->  WindowAgg
+                                                   ->  Sort
+                                                         Sort Key: in_web.currency_ratio
+                                                         ->  Subquery Scan on in_web
+                                                               ->  GroupAggregate
+                                                                     Group Key: ws.ws_item_sk
+                                                                     ->  Sort
+                                                                           Sort Key: ws.ws_item_sk
+                                                                           ->  Nested Loop
+                                                                                 ->  Gather
+                                                                                       Workers Planned: 2
+                                                                                       ->  Nested Loop
+                                                                                             ->  Parallel Seq Scan on web_returns wr
+                                                                                                   Filter: (wr_return_amt > '10000'::numeric)
+                                                                                             ->  Index Scan using web_sales_pkey on web_sales ws
+                                                                                                   Index Cond: ((ws_item_sk = wr.wr_item_sk) AND (ws_order_number = wr.wr_order_number))
+                                                                                                   Filter: ((ws_net_profit > '1'::numeric) AND (ws_net_paid > '0'::numeric) AND (ws_quantity > 0))
+                                                                                 ->  Index Scan using date_dim_pkey on date_dim
+                                                                                       Index Cond: (d_date_sk = ws.ws_sold_date_sk)
+                                                                                       Filter: ((d_year = 2002) AND (d_moy = 12))
+                           ->  Subquery Scan on catalog
+                                 Filter: ((catalog.return_rank <= 10) OR (catalog.currency_rank <= 10))
+                                 ->  WindowAgg
+                                       ->  Sort
+                                             Sort Key: in_cat.return_ratio
+                                             ->  WindowAgg
+                                                   ->  Sort
+                                                         Sort Key: in_cat.currency_ratio
+                                                         ->  Subquery Scan on in_cat
+                                                               ->  GroupAggregate
+                                                                     Group Key: cs.cs_item_sk
+                                                                     ->  Sort
+                                                                           Sort Key: cs.cs_item_sk
+                                                                           ->  Nested Loop
+                                                                                 ->  Gather
+                                                                                       Workers Planned: 2
+                                                                                       ->  Nested Loop
+                                                                                             ->  Parallel Seq Scan on catalog_returns cr
+                                                                                                   Filter: (cr_return_amount > '10000'::numeric)
+                                                                                             ->  Index Scan using catalog_sales_pkey on catalog_sales cs
+                                                                                                   Index Cond: ((cs_item_sk = cr.cr_item_sk) AND (cs_order_number = cr.cr_order_number))
+                                                                                                   Filter: ((cs_net_profit > '1'::numeric) AND (cs_net_paid > '0'::numeric) AND (cs_quantity > 0))
+                                                                                 ->  Index Scan using date_dim_pkey on date_dim date_dim_1
+                                                                                       Index Cond: (d_date_sk = cs.cs_sold_date_sk)
+                                                                                       Filter: ((d_year = 2002) AND (d_moy = 12))
+                           ->  Subquery Scan on store
+                                 Filter: ((store.return_rank <= 10) OR (store.currency_rank <= 10))
+                                 ->  WindowAgg
+                                       ->  Sort
+                                             Sort Key: in_store.return_ratio
+                                             ->  WindowAgg
+                                                   ->  Sort
+                                                         Sort Key: in_store.currency_ratio
+                                                         ->  Subquery Scan on in_store
+                                                               ->  GroupAggregate
+                                                                     Group Key: sts.ss_item_sk
+                                                                     ->  Sort
+                                                                           Sort Key: sts.ss_item_sk
+                                                                           ->  Nested Loop
+                                                                                 ->  Gather
+                                                                                       Workers Planned: 2
+                                                                                       ->  Nested Loop
+                                                                                             ->  Parallel Seq Scan on store_returns sr
+                                                                                                   Filter: (sr_return_amt > '10000'::numeric)
+                                                                                             ->  Index Scan using store_sales_pkey on store_sales sts
+                                                                                                   Index Cond: ((ss_item_sk = sr.sr_item_sk) AND (ss_ticket_number = sr.sr_ticket_number))
+                                                                                                   Filter: ((ss_net_profit > '1'::numeric) AND (ss_net_paid > '0'::numeric) AND (ss_quantity > 0))
+                                                                                 ->  Index Scan using date_dim_pkey on date_dim date_dim_2
+                                                                                       Index Cond: (d_date_sk = sts.ss_sold_date_sk)
+                                                                                       Filter: ((d_year = 2002) AND (d_moy = 12))
+(83 rows)
+

@@ -1,0 +1,39 @@
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Merge Join
+   Merge Cond: (wswscs.d_week_seq = date_dim.d_week_seq)
+   CTE wswscs
+     ->  Finalize GroupAggregate
+           Group Key: date_dim_2.d_week_seq
+           ->  Gather Merge
+                 Workers Planned: 2
+                 ->  Sort
+                       Sort Key: date_dim_2.d_week_seq
+                       ->  Partial HashAggregate
+                             Group Key: date_dim_2.d_week_seq
+                             ->  Parallel Hash Join
+                                   Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_2.d_date_sk)
+                                   ->  Parallel Append
+                                         ->  Parallel Seq Scan on catalog_sales
+                                         ->  Parallel Seq Scan on web_sales
+                                   ->  Parallel Hash
+                                         ->  Parallel Seq Scan on date_dim date_dim_2
+   ->  CTE Scan on wswscs
+   ->  Materialize
+         ->  Merge Join
+               Merge Cond: (((wswscs_1.d_week_seq - 53)) = date_dim.d_week_seq)
+               ->  Sort
+                     Sort Key: ((wswscs_1.d_week_seq - 53))
+                     ->  Merge Join
+                           Merge Cond: (wswscs_1.d_week_seq = date_dim_1.d_week_seq)
+                           ->  CTE Scan on wswscs wswscs_1
+                           ->  Sort
+                                 Sort Key: date_dim_1.d_week_seq
+                                 ->  Seq Scan on date_dim date_dim_1
+                                       Filter: (d_year = 1999)
+               ->  Sort
+                     Sort Key: date_dim.d_week_seq
+                     ->  Seq Scan on date_dim
+                           Filter: (d_year = 1998)
+(35 rows)
+

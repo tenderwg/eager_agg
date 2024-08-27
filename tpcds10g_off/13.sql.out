@@ -1,0 +1,33 @@
+                                                                                                                                                                                                                                                                                                                                                                                                                        QUERY PLAN                                                                                                                                                                                                                                                                                                                                                                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather
+         Workers Planned: 2
+         ->  Partial Aggregate
+               ->  Nested Loop
+                     Join Filter: (((customer_demographics.cd_marital_status = 'W'::bpchar) AND (customer_demographics.cd_education_status = 'Advanced Degree'::bpchar) AND (store_sales.ss_sales_price >= 100.00) AND (store_sales.ss_sales_price <= 150.00) AND (household_demographics.hd_dep_count = 3)) OR ((customer_demographics.cd_marital_status = 'U'::bpchar) AND (customer_demographics.cd_education_status = 'Primary'::bpchar) AND (store_sales.ss_sales_price >= 50.00) AND (store_sales.ss_sales_price <= 100.00) AND (household_demographics.hd_dep_count = 1)) OR ((customer_demographics.cd_marital_status = 'S'::bpchar) AND (customer_demographics.cd_education_status = '4 yr Degree'::bpchar) AND (store_sales.ss_sales_price >= 150.00) AND (store_sales.ss_sales_price <= 200.00) AND (household_demographics.hd_dep_count = 1)))
+                     ->  Nested Loop
+                           ->  Hash Join
+                                 Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                 ->  Hash Join
+                                       Hash Cond: (store_sales.ss_hdemo_sk = household_demographics.hd_demo_sk)
+                                       ->  Parallel Hash Join
+                                             Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                             ->  Parallel Seq Scan on store_sales
+                                                   Filter: ((((ss_sales_price >= 100.00) AND (ss_sales_price <= 150.00)) OR ((ss_sales_price >= 50.00) AND (ss_sales_price <= 100.00)) OR ((ss_sales_price >= 150.00) AND (ss_sales_price <= 200.00))) AND (((ss_net_profit >= '100'::numeric) AND (ss_net_profit <= '200'::numeric)) OR ((ss_net_profit >= '150'::numeric) AND (ss_net_profit <= '300'::numeric)) OR ((ss_net_profit >= '50'::numeric) AND (ss_net_profit <= '250'::numeric))))
+                                             ->  Parallel Hash
+                                                   ->  Parallel Seq Scan on date_dim
+                                                         Filter: (d_year = 2001)
+                                       ->  Hash
+                                             ->  Seq Scan on household_demographics
+                                                   Filter: ((hd_dep_count = 3) OR (hd_dep_count = 1) OR (hd_dep_count = 1))
+                                 ->  Hash
+                                       ->  Seq Scan on store
+                           ->  Index Scan using customer_address_pkey on customer_address
+                                 Index Cond: (ca_address_sk = store_sales.ss_addr_sk)
+                                 Filter: (((ca_country)::text = 'United States'::text) AND ((ca_state = ANY ('{NE,IN,NC}'::bpchar[])) OR (ca_state = ANY ('{ID,GA,ME}'::bpchar[])) OR (ca_state = ANY ('{TN,AL,FL}'::bpchar[]))) AND (((ca_state = ANY ('{NE,IN,NC}'::bpchar[])) AND (store_sales.ss_net_profit >= '100'::numeric) AND (store_sales.ss_net_profit <= '200'::numeric)) OR ((ca_state = ANY ('{ID,GA,ME}'::bpchar[])) AND (store_sales.ss_net_profit >= '150'::numeric) AND (store_sales.ss_net_profit <= '300'::numeric)) OR ((ca_state = ANY ('{TN,AL,FL}'::bpchar[])) AND (store_sales.ss_net_profit >= '50'::numeric) AND (store_sales.ss_net_profit <= '250'::numeric))))
+                     ->  Index Scan using customer_demographics_pkey on customer_demographics
+                           Index Cond: (cd_demo_sk = store_sales.ss_cdemo_sk)
+                           Filter: (((cd_marital_status = 'W'::bpchar) AND (cd_education_status = 'Advanced Degree'::bpchar)) OR ((cd_marital_status = 'U'::bpchar) AND (cd_education_status = 'Primary'::bpchar)) OR ((cd_marital_status = 'S'::bpchar) AND (cd_education_status = '4 yr Degree'::bpchar)))
+(29 rows)
+

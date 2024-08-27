@@ -1,0 +1,31 @@
+                                                               QUERY PLAN                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Gather Merge
+         Workers Planned: 2
+         ->  Sort
+               Sort Key: customer.c_customer_id
+               ->  Parallel Hash Join
+                     Hash Cond: (store_returns.sr_cdemo_sk = customer_demographics.cd_demo_sk)
+                     ->  Parallel Seq Scan on store_returns
+                     ->  Parallel Hash
+                           ->  Nested Loop
+                                 ->  Hash Join
+                                       Hash Cond: (customer.c_current_hdemo_sk = household_demographics.hd_demo_sk)
+                                       ->  Parallel Hash Join
+                                             Hash Cond: (customer.c_current_addr_sk = customer_address.ca_address_sk)
+                                             ->  Parallel Seq Scan on customer
+                                             ->  Parallel Hash
+                                                   ->  Parallel Seq Scan on customer_address
+                                                         Filter: ((ca_city)::text = 'Belmont'::text)
+                                       ->  Hash
+                                             ->  Hash Join
+                                                   Hash Cond: (household_demographics.hd_income_band_sk = income_band.ib_income_band_sk)
+                                                   ->  Seq Scan on household_demographics
+                                                   ->  Hash
+                                                         ->  Seq Scan on income_band
+                                                               Filter: ((ib_lower_bound >= 15969) AND (ib_upper_bound <= 65969))
+                                 ->  Index Only Scan using customer_demographics_pkey on customer_demographics
+                                       Index Cond: (cd_demo_sk = customer.c_current_cdemo_sk)
+(27 rows)
+

@@ -1,0 +1,42 @@
+                                                                                                                       QUERY PLAN                                                                                                                       
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   CTE v1
+     ->  WindowAgg
+           ->  WindowAgg
+                 ->  GroupAggregate
+                       Group Key: item.i_category, item.i_brand, call_center.cc_name, date_dim.d_year, date_dim.d_moy
+                       ->  Gather Merge
+                             Workers Planned: 2
+                             ->  Sort
+                                   Sort Key: item.i_category, item.i_brand, call_center.cc_name, date_dim.d_year, date_dim.d_moy
+                                   ->  Parallel Hash Join
+                                         Hash Cond: (catalog_sales.cs_item_sk = item.i_item_sk)
+                                         ->  Hash Join
+                                               Hash Cond: (catalog_sales.cs_call_center_sk = call_center.cc_call_center_sk)
+                                               ->  Parallel Hash Join
+                                                     Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim.d_date_sk)
+                                                     ->  Parallel Seq Scan on catalog_sales
+                                                     ->  Parallel Hash
+                                                           ->  Parallel Seq Scan on date_dim
+                                                                 Filter: ((d_year = 2000) OR ((d_year = 1999) AND (d_moy = 12)) OR ((d_year = 2001) AND (d_moy = 1)))
+                                               ->  Hash
+                                                     ->  Seq Scan on call_center
+                                         ->  Parallel Hash
+                                               ->  Parallel Seq Scan on item
+   ->  Sort
+         Sort Key: ((v1.sum_sales - v1.avg_monthly_sales)), v1.avg_monthly_sales
+         ->  Merge Join
+               Merge Cond: ((v1_lead.i_category = v1.i_category) AND (v1_lead.i_brand = v1.i_brand) AND ((v1_lead.cc_name)::text = (v1.cc_name)::text))
+               Join Filter: (v1.rn = (v1_lead.rn - 1))
+               ->  CTE Scan on v1 v1_lead
+               ->  Materialize
+                     ->  Merge Join
+                           Merge Cond: ((v1_lag.i_category = v1.i_category) AND (v1_lag.i_brand = v1.i_brand) AND ((v1_lag.cc_name)::text = (v1.cc_name)::text))
+                           Join Filter: (v1.rn = (v1_lag.rn + 1))
+                           ->  CTE Scan on v1 v1_lag
+                           ->  Materialize
+                                 ->  CTE Scan on v1
+                                       Filter: ((avg_monthly_sales > '0'::numeric) AND (d_year = 2000) AND (CASE WHEN (avg_monthly_sales > '0'::numeric) THEN (abs((sum_sales - avg_monthly_sales)) / avg_monthly_sales) ELSE NULL::numeric END > 0.1))
+(38 rows)
+

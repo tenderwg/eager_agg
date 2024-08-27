@@ -1,0 +1,34 @@
+                                                                                      QUERY PLAN                                                                                       
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: (count(DISTINCT cs1.cs_order_number))
+         ->  Aggregate
+               ->  Sort
+                     Sort Key: cs1.cs_order_number
+                     ->  Nested Loop Semi Join
+                           ->  Nested Loop
+                                 Join Filter: (call_center.cc_call_center_sk = cs1.cs_call_center_sk)
+                                 ->  Nested Loop
+                                       ->  Gather
+                                             Workers Planned: 2
+                                             ->  Parallel Hash Right Anti Join
+                                                   Hash Cond: (cr1.cr_order_number = cs1.cs_order_number)
+                                                   ->  Parallel Seq Scan on catalog_returns cr1
+                                                   ->  Parallel Hash
+                                                         ->  Parallel Hash Join
+                                                               Hash Cond: (cs1.cs_ship_date_sk = date_dim.d_date_sk)
+                                                               ->  Parallel Seq Scan on catalog_sales cs1
+                                                               ->  Parallel Hash
+                                                                     ->  Parallel Seq Scan on date_dim
+                                                                           Filter: ((d_date >= '2002-02-01'::date) AND (d_date <= '2002-04-02 00:00:00'::timestamp without time zone))
+                                       ->  Index Scan using customer_address_pkey on customer_address
+                                             Index Cond: (ca_address_sk = cs1.cs_ship_addr_sk)
+                                             Filter: (ca_state = 'WA'::bpchar)
+                                 ->  Seq Scan on call_center
+                                       Filter: ((cc_county)::text = ANY ('{"Ziebach County","Walker County","Williamson County","Ziebach County","Ziebach County"}'::text[]))
+                           ->  Index Scan using catalog_sales_pkey on catalog_sales cs2
+                                 Index Cond: (cs_order_number = cs1.cs_order_number)
+                                 Filter: (cs1.cs_warehouse_sk <> cs_warehouse_sk)
+(30 rows)
+

@@ -1,0 +1,62 @@
+                                                                               QUERY PLAN                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Aggregate
+         ->  Subquery Scan on hot_cust
+               ->  SetOp Intersect
+                     ->  Sort
+                           Sort Key: "*SELECT* 3".c_last_name, "*SELECT* 3".c_first_name, "*SELECT* 3".d_date
+                           ->  Append
+                                 ->  Subquery Scan on "*SELECT* 3"
+                                       ->  Unique
+                                             ->  Gather Merge
+                                                   Workers Planned: 2
+                                                   ->  Sort
+                                                         Sort Key: customer.c_last_name, customer.c_first_name, date_dim.d_date
+                                                         ->  Nested Loop
+                                                               ->  Parallel Hash Join
+                                                                     Hash Cond: (web_sales.ws_sold_date_sk = date_dim.d_date_sk)
+                                                                     ->  Parallel Seq Scan on web_sales
+                                                                     ->  Parallel Hash
+                                                                           ->  Parallel Seq Scan on date_dim
+                                                                                 Filter: ((d_month_seq >= 1179) AND (d_month_seq <= 1190))
+                                                               ->  Index Scan using customer_pkey on customer
+                                                                     Index Cond: (c_customer_sk = web_sales.ws_bill_customer_sk)
+                                 ->  Result
+                                       ->  SetOp Intersect
+                                             ->  Sort
+                                                   Sort Key: "*SELECT* 2".c_last_name, "*SELECT* 2".c_first_name, "*SELECT* 2".d_date
+                                                   ->  Append
+                                                         ->  Subquery Scan on "*SELECT* 2"
+                                                               ->  Unique
+                                                                     ->  Gather Merge
+                                                                           Workers Planned: 2
+                                                                           ->  Sort
+                                                                                 Sort Key: customer_1.c_last_name, customer_1.c_first_name, date_dim_1.d_date
+                                                                                 ->  Nested Loop
+                                                                                       ->  Parallel Hash Join
+                                                                                             Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_1.d_date_sk)
+                                                                                             ->  Parallel Seq Scan on catalog_sales
+                                                                                             ->  Parallel Hash
+                                                                                                   ->  Parallel Seq Scan on date_dim date_dim_1
+                                                                                                         Filter: ((d_month_seq >= 1179) AND (d_month_seq <= 1190))
+                                                                                       ->  Index Scan using customer_pkey on customer customer_1
+                                                                                             Index Cond: (c_customer_sk = catalog_sales.cs_bill_customer_sk)
+                                                         ->  Subquery Scan on "*SELECT* 1"
+                                                               ->  Unique
+                                                                     ->  Gather Merge
+                                                                           Workers Planned: 2
+                                                                           ->  Sort
+                                                                                 Sort Key: customer_2.c_last_name, customer_2.c_first_name, date_dim_2.d_date
+                                                                                 ->  Parallel Hash Join
+                                                                                       Hash Cond: (customer_2.c_customer_sk = store_sales.ss_customer_sk)
+                                                                                       ->  Parallel Seq Scan on customer customer_2
+                                                                                       ->  Parallel Hash
+                                                                                             ->  Parallel Hash Join
+                                                                                                   Hash Cond: (store_sales.ss_sold_date_sk = date_dim_2.d_date_sk)
+                                                                                                   ->  Parallel Seq Scan on store_sales
+                                                                                                   ->  Parallel Hash
+                                                                                                         ->  Parallel Seq Scan on date_dim date_dim_2
+                                                                                                               Filter: ((d_month_seq >= 1179) AND (d_month_seq <= 1190))
+(58 rows)
+

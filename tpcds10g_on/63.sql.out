@@ -1,0 +1,39 @@
+                                                                                                                                                                                                                                                                                                 QUERY PLAN                                                                                                                                                                                                                                                                                                  
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Incremental Sort
+         Sort Key: tmp1.i_manager_id, tmp1.avg_monthly_sales, tmp1.sum_sales
+         Presorted Key: tmp1.i_manager_id
+         ->  Subquery Scan on tmp1
+               Filter: (CASE WHEN (tmp1.avg_monthly_sales > '0'::numeric) THEN (abs((tmp1.sum_sales - tmp1.avg_monthly_sales)) / tmp1.avg_monthly_sales) ELSE NULL::numeric END > 0.1)
+               ->  WindowAgg
+                     ->  Finalize GroupAggregate
+                           Group Key: item.i_manager_id, date_dim.d_moy
+                           ->  Nested Loop
+                                 ->  Partial GroupAggregate
+                                       Group Key: item.i_manager_id, date_dim.d_moy, store_sales.ss_store_sk
+                                       ->  Sort
+                                             Sort Key: item.i_manager_id, date_dim.d_moy, store_sales.ss_store_sk
+                                             ->  Gather
+                                                   Workers Planned: 2
+                                                   ->  Nested Loop
+                                                         ->  Nested Loop
+                                                               ->  Parallel Seq Scan on item
+                                                                     Filter: (((i_category = ANY ('{Books,Children,Electronics}'::bpchar[])) AND (i_class = ANY ('{personal,portable,reference,self-help}'::bpchar[])) AND (i_brand = ANY ('{"scholaramalgamalg #14","scholaramalgamalg #7","exportiunivamalg #9","scholaramalgamalg #9"}'::bpchar[]))) OR ((i_category = ANY ('{Women,Music,Men}'::bpchar[])) AND (i_class = ANY ('{accessories,classical,fragrances,pants}'::bpchar[])) AND (i_brand = ANY ('{"amalgimporto #1","edu packscholar #1","exportiimporto #1","importoamalg #1"}'::bpchar[]))))
+                                                               ->  Bitmap Heap Scan on store_sales
+                                                                     Recheck Cond: (item.i_item_sk = ss_item_sk)
+                                                                     ->  Bitmap Index Scan on store_sales_pkey
+                                                                           Index Cond: (ss_item_sk = item.i_item_sk)
+                                                         ->  Memoize
+                                                               Cache Key: store_sales.ss_sold_date_sk
+                                                               Cache Mode: logical
+                                                               ->  Index Scan using date_dim_pkey on date_dim
+                                                                     Index Cond: (d_date_sk = store_sales.ss_sold_date_sk)
+                                                                     Filter: (d_month_seq = ANY ('{1216,1217,1218,1219,1220,1221,1222,1223,1224,1225,1226,1227}'::integer[]))
+                                 ->  Memoize
+                                       Cache Key: store_sales.ss_store_sk
+                                       Cache Mode: logical
+                                       ->  Index Only Scan using store_pkey on store
+                                             Index Cond: (s_store_sk = store_sales.ss_store_sk)
+(35 rows)
+

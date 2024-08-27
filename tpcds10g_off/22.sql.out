@@ -1,0 +1,27 @@
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: (avg(inventory.inv_quantity_on_hand)), item.i_product_name, item.i_brand, item.i_class, item.i_category
+         ->  GroupAggregate
+               Group Key: item.i_product_name, item.i_brand, item.i_class, item.i_category
+               Group Key: item.i_product_name, item.i_brand, item.i_class
+               Group Key: item.i_product_name, item.i_brand
+               Group Key: item.i_product_name
+               Group Key: ()
+               ->  Gather Merge
+                     Workers Planned: 2
+                     ->  Sort
+                           Sort Key: item.i_product_name, item.i_brand, item.i_class, item.i_category
+                           ->  Parallel Hash Join
+                                 Hash Cond: (inventory.inv_item_sk = item.i_item_sk)
+                                 ->  Parallel Hash Join
+                                       Hash Cond: (inventory.inv_date_sk = date_dim.d_date_sk)
+                                       ->  Parallel Seq Scan on inventory
+                                       ->  Parallel Hash
+                                             ->  Parallel Seq Scan on date_dim
+                                                   Filter: ((d_month_seq >= 1219) AND (d_month_seq <= 1230))
+                                 ->  Parallel Hash
+                                       ->  Parallel Seq Scan on item
+(23 rows)
+

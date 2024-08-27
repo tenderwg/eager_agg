@@ -1,0 +1,35 @@
+                                                                        QUERY PLAN                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: (sum(web_sales.ws_ext_discount_amt))
+         ->  Aggregate
+               ->  Hash Join
+                     Hash Cond: (web_sales.ws_item_sk = item.i_item_sk)
+                     Join Filter: (web_sales.ws_ext_discount_amt > (SubPlan 1))
+                     ->  Gather
+                           Workers Planned: 2
+                           ->  Parallel Hash Join
+                                 Hash Cond: (web_sales.ws_sold_date_sk = date_dim.d_date_sk)
+                                 ->  Parallel Seq Scan on web_sales
+                                 ->  Parallel Hash
+                                       ->  Parallel Seq Scan on date_dim
+                                             Filter: ((d_date >= '2002-02-28'::date) AND (d_date <= '2002-05-29 00:00:00'::timestamp without time zone))
+                     ->  Hash
+                           ->  Seq Scan on item
+                                 Filter: (i_manufact_id = 922)
+                     SubPlan 1
+                       ->  Aggregate
+                             ->  Nested Loop
+                                   ->  Bitmap Heap Scan on web_sales web_sales_1
+                                         Recheck Cond: (ws_item_sk = item.i_item_sk)
+                                         ->  Bitmap Index Scan on web_sales_pkey
+                                               Index Cond: (ws_item_sk = item.i_item_sk)
+                                   ->  Memoize
+                                         Cache Key: web_sales_1.ws_sold_date_sk
+                                         Cache Mode: logical
+                                         ->  Index Scan using date_dim_pkey on date_dim date_dim_1
+                                               Index Cond: (d_date_sk = web_sales_1.ws_sold_date_sk)
+                                               Filter: ((d_date >= '2002-02-28'::date) AND (d_date <= '2002-05-29 00:00:00'::timestamp without time zone))
+(31 rows)
+

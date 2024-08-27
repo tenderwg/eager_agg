@@ -1,0 +1,26 @@
+                                                                                                QUERY PLAN                                                                                                 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: item.i_category, item.i_class, item.i_item_id, item.i_item_desc, ((((sum(catalog_sales.cs_ext_sales_price)) * '100'::numeric) / sum((sum(catalog_sales.cs_ext_sales_price))) OVER (?)))
+         ->  WindowAgg
+               ->  Sort
+                     Sort Key: item.i_class
+                     ->  GroupAggregate
+                           Group Key: item.i_category, item.i_class, item.i_item_id, item.i_item_desc, item.i_current_price
+                           ->  Gather Merge
+                                 Workers Planned: 2
+                                 ->  Sort
+                                       Sort Key: item.i_category, item.i_class, item.i_item_id, item.i_item_desc, item.i_current_price
+                                       ->  Nested Loop
+                                             ->  Parallel Hash Join
+                                                   Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim.d_date_sk)
+                                                   ->  Parallel Seq Scan on catalog_sales
+                                                   ->  Parallel Hash
+                                                         ->  Parallel Seq Scan on date_dim
+                                                               Filter: ((d_date >= '1999-05-24'::date) AND (d_date <= '1999-06-23 00:00:00'::timestamp without time zone))
+                                             ->  Index Scan using item_pkey on item
+                                                   Index Cond: (i_item_sk = catalog_sales.cs_item_sk)
+                                                   Filter: (i_category = ANY ('{Children,Men,Sports}'::bpchar[]))
+(22 rows)
+

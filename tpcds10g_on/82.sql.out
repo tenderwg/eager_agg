@@ -1,0 +1,23 @@
+                                                                                      QUERY PLAN                                                                                      
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Group
+         Group Key: item.i_item_id, item.i_item_desc, item.i_current_price
+         ->  Nested Loop
+               ->  Gather Merge
+                     Workers Planned: 2
+                     ->  Sort
+                           Sort Key: item.i_item_id, item.i_item_desc, item.i_current_price
+                           ->  Nested Loop
+                                 ->  Parallel Seq Scan on item
+                                       Filter: ((i_current_price >= '25'::numeric) AND (i_current_price <= '55'::numeric) AND (i_manufact_id = ANY ('{838,637,831,580}'::integer[])))
+                                 ->  Nested Loop
+                                       ->  Seq Scan on date_dim
+                                             Filter: ((d_date >= '2001-04-09'::date) AND (d_date <= '2001-06-08 00:00:00'::timestamp without time zone))
+                                       ->  Index Scan using inventory_pkey on inventory
+                                             Index Cond: ((inv_date_sk = date_dim.d_date_sk) AND (inv_item_sk = item.i_item_sk))
+                                             Filter: ((inv_quantity_on_hand >= 100) AND (inv_quantity_on_hand <= 500))
+               ->  Index Only Scan using store_sales_pkey on store_sales
+                     Index Cond: (ss_item_sk = inventory.inv_item_sk)
+(19 rows)
+

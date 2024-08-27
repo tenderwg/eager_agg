@@ -1,0 +1,41 @@
+                                                                                                             QUERY PLAN                                                                                                              
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Subquery Scan on y
+         Filter: (y.web_cumulative > y.store_cumulative)
+         ->  WindowAgg
+               ->  Sort
+                     Sort Key: (CASE WHEN (web_sales.ws_item_sk IS NOT NULL) THEN web_sales.ws_item_sk ELSE store_sales.ss_item_sk END), (CASE WHEN (date_dim_1.d_date IS NOT NULL) THEN date_dim_1.d_date ELSE date_dim.d_date END)
+                     ->  Hash Full Join
+                           Hash Cond: ((store_sales.ss_item_sk = web_sales.ws_item_sk) AND (date_dim.d_date = date_dim_1.d_date))
+                           ->  WindowAgg
+                                 ->  Finalize GroupAggregate
+                                       Group Key: store_sales.ss_item_sk, date_dim.d_date
+                                       ->  Gather Merge
+                                             Workers Planned: 2
+                                             ->  Partial GroupAggregate
+                                                   Group Key: store_sales.ss_item_sk, date_dim.d_date
+                                                   ->  Sort
+                                                         Sort Key: store_sales.ss_item_sk, date_dim.d_date
+                                                         ->  Parallel Hash Join
+                                                               Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                                               ->  Parallel Seq Scan on store_sales
+                                                               ->  Parallel Hash
+                                                                     ->  Parallel Seq Scan on date_dim
+                                                                           Filter: ((d_month_seq >= 1202) AND (d_month_seq <= 1213))
+                           ->  Hash
+                                 ->  WindowAgg
+                                       ->  GroupAggregate
+                                             Group Key: web_sales.ws_item_sk, date_dim_1.d_date
+                                             ->  Gather Merge
+                                                   Workers Planned: 2
+                                                   ->  Sort
+                                                         Sort Key: web_sales.ws_item_sk, date_dim_1.d_date
+                                                         ->  Parallel Hash Join
+                                                               Hash Cond: (web_sales.ws_sold_date_sk = date_dim_1.d_date_sk)
+                                                               ->  Parallel Seq Scan on web_sales
+                                                               ->  Parallel Hash
+                                                                     ->  Parallel Seq Scan on date_dim date_dim_1
+                                                                           Filter: ((d_month_seq >= 1202) AND (d_month_seq <= 1213))
+(37 rows)
+

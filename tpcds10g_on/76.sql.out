@@ -1,0 +1,45 @@
+                                                          QUERY PLAN                                                          
+------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Finalize GroupAggregate
+         Group Key: ('store'::text), ('ss_hdemo_sk'::text), date_dim.d_year, date_dim.d_qoy, item.i_category
+         ->  Gather Merge
+               Workers Planned: 2
+               ->  Partial GroupAggregate
+                     Group Key: ('store'::text), ('ss_hdemo_sk'::text), date_dim.d_year, date_dim.d_qoy, item.i_category
+                     ->  Sort
+                           Sort Key: ('store'::text), ('ss_hdemo_sk'::text), date_dim.d_year, date_dim.d_qoy, item.i_category
+                           ->  Parallel Append
+                                 ->  Parallel Hash Join
+                                       Hash Cond: (store_sales.ss_item_sk = item.i_item_sk)
+                                       ->  Parallel Hash Join
+                                             Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                             ->  Parallel Seq Scan on store_sales
+                                                   Filter: (ss_hdemo_sk IS NULL)
+                                             ->  Parallel Hash
+                                                   ->  Parallel Seq Scan on date_dim
+                                       ->  Parallel Hash
+                                             ->  Parallel Seq Scan on item
+                                 ->  Parallel Hash Join
+                                       Hash Cond: (catalog_sales.cs_item_sk = item_1.i_item_sk)
+                                       ->  Nested Loop
+                                             ->  Parallel Seq Scan on catalog_sales
+                                                   Filter: (cs_bill_addr_sk IS NULL)
+                                             ->  Memoize
+                                                   Cache Key: catalog_sales.cs_sold_date_sk
+                                                   Cache Mode: logical
+                                                   ->  Index Scan using date_dim_pkey on date_dim date_dim_1
+                                                         Index Cond: (d_date_sk = catalog_sales.cs_sold_date_sk)
+                                       ->  Parallel Hash
+                                             ->  Parallel Seq Scan on item item_1
+                                 ->  Nested Loop
+                                       ->  Parallel Hash Join
+                                             Hash Cond: (web_sales.ws_sold_date_sk = date_dim_2.d_date_sk)
+                                             ->  Parallel Seq Scan on web_sales
+                                                   Filter: (ws_ship_hdemo_sk IS NULL)
+                                             ->  Parallel Hash
+                                                   ->  Parallel Seq Scan on date_dim date_dim_2
+                                       ->  Index Scan using item_pkey on item item_2
+                                             Index Cond: (i_item_sk = web_sales.ws_item_sk)
+(41 rows)
+

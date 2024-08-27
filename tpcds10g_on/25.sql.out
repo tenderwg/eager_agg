@@ -1,0 +1,40 @@
+                                                                                 QUERY PLAN                                                                                  
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  GroupAggregate
+         Group Key: item.i_item_id, item.i_item_desc, store.s_store_id, store.s_store_name
+         ->  Nested Loop
+               ->  Nested Loop
+                     ->  Nested Loop
+                           Join Filter: (catalog_sales.cs_item_sk = item.i_item_sk)
+                           ->  Gather Merge
+                                 Workers Planned: 2
+                                 ->  Sort
+                                       Sort Key: item.i_item_id, item.i_item_desc, store.s_store_id, store.s_store_name
+                                       ->  Nested Loop
+                                             ->  Nested Loop
+                                                   ->  Nested Loop
+                                                         ->  Parallel Hash Join
+                                                               Hash Cond: (store_returns.sr_returned_date_sk = d2.d_date_sk)
+                                                               ->  Parallel Seq Scan on store_returns
+                                                               ->  Parallel Hash
+                                                                     ->  Parallel Seq Scan on date_dim d2
+                                                                           Filter: ((d_moy >= 4) AND (d_moy <= 10) AND (d_year = 2002))
+                                                         ->  Index Scan using store_sales_pkey on store_sales
+                                                               Index Cond: ((ss_item_sk = store_returns.sr_item_sk) AND (ss_ticket_number = store_returns.sr_ticket_number))
+                                                               Filter: (store_returns.sr_customer_sk = ss_customer_sk)
+                                                   ->  Index Scan using store_pkey on store
+                                                         Index Cond: (s_store_sk = store_sales.ss_store_sk)
+                                             ->  Index Scan using item_pkey on item
+                                                   Index Cond: (i_item_sk = store_sales.ss_item_sk)
+                           ->  Index Scan using catalog_sales_pkey on catalog_sales
+                                 Index Cond: (cs_item_sk = store_sales.ss_item_sk)
+                                 Filter: (cs_bill_customer_sk = store_sales.ss_customer_sk)
+                     ->  Index Scan using date_dim_pkey on date_dim d1
+                           Index Cond: (d_date_sk = store_sales.ss_sold_date_sk)
+                           Filter: ((d_moy = 4) AND (d_year = 2002))
+               ->  Index Scan using date_dim_pkey on date_dim d3
+                     Index Cond: (d_date_sk = catalog_sales.cs_sold_date_sk)
+                     Filter: ((d_moy >= 4) AND (d_moy <= 10) AND (d_year = 2002))
+(36 rows)
+

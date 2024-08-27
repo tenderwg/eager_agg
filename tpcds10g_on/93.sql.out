@@ -1,0 +1,24 @@
+                                                                                                                                              QUERY PLAN                                                                                                                                              
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: (sum(CASE WHEN (store_returns.sr_return_quantity IS NOT NULL) THEN (((store_sales.ss_quantity - store_returns.sr_return_quantity))::numeric * store_sales.ss_sales_price) ELSE ((store_sales.ss_quantity)::numeric * store_sales.ss_sales_price) END)), store_sales.ss_customer_sk
+         ->  Finalize GroupAggregate
+               Group Key: store_sales.ss_customer_sk
+               ->  Gather Merge
+                     Workers Planned: 2
+                     ->  Partial GroupAggregate
+                           Group Key: store_sales.ss_customer_sk
+                           ->  Sort
+                                 Sort Key: store_sales.ss_customer_sk
+                                 ->  Nested Loop
+                                       ->  Hash Join
+                                             Hash Cond: (store_returns.sr_reason_sk = reason.r_reason_sk)
+                                             ->  Parallel Seq Scan on store_returns
+                                             ->  Hash
+                                                   ->  Seq Scan on reason
+                                                         Filter: (r_reason_desc = 'reason 48'::bpchar)
+                                       ->  Index Scan using store_sales_pkey on store_sales
+                                             Index Cond: ((ss_item_sk = store_returns.sr_item_sk) AND (ss_ticket_number = store_returns.sr_ticket_number))
+(20 rows)
+

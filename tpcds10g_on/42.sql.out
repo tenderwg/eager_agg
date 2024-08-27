@@ -1,0 +1,23 @@
+                                            QUERY PLAN                                             
+---------------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: (sum(store_sales.ss_ext_sales_price)) DESC, item.i_category_id, item.i_category
+         ->  GroupAggregate
+               Group Key: item.i_category_id, item.i_category
+               ->  Gather Merge
+                     Workers Planned: 2
+                     ->  Sort
+                           Sort Key: item.i_category_id, item.i_category
+                           ->  Nested Loop
+                                 ->  Parallel Hash Join
+                                       Hash Cond: (store_sales.ss_sold_date_sk = dt.d_date_sk)
+                                       ->  Parallel Seq Scan on store_sales
+                                       ->  Parallel Hash
+                                             ->  Parallel Seq Scan on date_dim dt
+                                                   Filter: ((d_moy = 12) AND (d_year = 1999))
+                                 ->  Index Scan using item_pkey on item
+                                       Index Cond: (i_item_sk = store_sales.ss_item_sk)
+                                       Filter: (i_manager_id = 1)
+(19 rows)
+

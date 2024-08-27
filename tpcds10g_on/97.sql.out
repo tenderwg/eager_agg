@@ -1,0 +1,34 @@
+                                                                      QUERY PLAN                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Aggregate
+         ->  Merge Full Join
+               Merge Cond: ((store_sales.ss_customer_sk = catalog_sales.cs_bill_customer_sk) AND (store_sales.ss_item_sk = catalog_sales.cs_item_sk))
+               ->  Group
+                     Group Key: store_sales.ss_customer_sk, store_sales.ss_item_sk
+                     ->  Gather Merge
+                           Workers Planned: 2
+                           ->  Group
+                                 Group Key: store_sales.ss_customer_sk, store_sales.ss_item_sk
+                                 ->  Sort
+                                       Sort Key: store_sales.ss_customer_sk, store_sales.ss_item_sk
+                                       ->  Parallel Hash Join
+                                             Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                             ->  Parallel Seq Scan on store_sales
+                                             ->  Parallel Hash
+                                                   ->  Parallel Seq Scan on date_dim
+                                                         Filter: ((d_month_seq >= 1211) AND (d_month_seq <= 1222))
+               ->  Group
+                     Group Key: catalog_sales.cs_bill_customer_sk, catalog_sales.cs_item_sk
+                     ->  Gather Merge
+                           Workers Planned: 2
+                           ->  Sort
+                                 Sort Key: catalog_sales.cs_bill_customer_sk, catalog_sales.cs_item_sk
+                                 ->  Parallel Hash Join
+                                       Hash Cond: (catalog_sales.cs_sold_date_sk = date_dim_1.d_date_sk)
+                                       ->  Parallel Seq Scan on catalog_sales
+                                       ->  Parallel Hash
+                                             ->  Parallel Seq Scan on date_dim date_dim_1
+                                                   Filter: ((d_month_seq >= 1211) AND (d_month_seq <= 1222))
+(30 rows)
+

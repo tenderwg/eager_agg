@@ -1,0 +1,85 @@
+                                                                            QUERY PLAN                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Incremental Sort
+         Sort Key: item_2.i_item_id, (sum(store_returns.sr_return_quantity))
+         Presorted Key: item_2.i_item_id
+         ->  Merge Join
+               Merge Cond: (item.i_item_id = item_2.i_item_id)
+               ->  Merge Join
+                     Merge Cond: (item.i_item_id = item_1.i_item_id)
+                     ->  Finalize GroupAggregate
+                           Group Key: item.i_item_id
+                           ->  Gather Merge
+                                 Workers Planned: 2
+                                 ->  Partial GroupAggregate
+                                       Group Key: item.i_item_id
+                                       ->  Sort
+                                             Sort Key: item.i_item_id
+                                             ->  Nested Loop
+                                                   ->  Parallel Hash Join
+                                                         Hash Cond: (catalog_returns.cr_returned_date_sk = date_dim.d_date_sk)
+                                                         ->  Parallel Seq Scan on catalog_returns
+                                                         ->  Parallel Hash
+                                                               ->  Parallel Hash Semi Join
+                                                                     Hash Cond: (date_dim.d_date = date_dim_1.d_date)
+                                                                     ->  Parallel Seq Scan on date_dim
+                                                                     ->  Parallel Hash
+                                                                           ->  Parallel Hash Semi Join
+                                                                                 Hash Cond: (date_dim_1.d_week_seq = date_dim_2.d_week_seq)
+                                                                                 ->  Parallel Seq Scan on date_dim date_dim_1
+                                                                                 ->  Parallel Hash
+                                                                                       ->  Parallel Seq Scan on date_dim date_dim_2
+                                                                                             Filter: (d_date = ANY ('{1998-06-11,1998-09-01,1998-11-12}'::date[]))
+                                                   ->  Index Scan using item_pkey on item
+                                                         Index Cond: (i_item_sk = catalog_returns.cr_item_sk)
+                     ->  GroupAggregate
+                           Group Key: item_1.i_item_id
+                           ->  Gather Merge
+                                 Workers Planned: 2
+                                 ->  Sort
+                                       Sort Key: item_1.i_item_id
+                                       ->  Nested Loop
+                                             ->  Parallel Hash Join
+                                                   Hash Cond: (web_returns.wr_returned_date_sk = date_dim_3.d_date_sk)
+                                                   ->  Parallel Seq Scan on web_returns
+                                                   ->  Parallel Hash
+                                                         ->  Parallel Hash Semi Join
+                                                               Hash Cond: (date_dim_3.d_date = date_dim_4.d_date)
+                                                               ->  Parallel Seq Scan on date_dim date_dim_3
+                                                               ->  Parallel Hash
+                                                                     ->  Parallel Hash Semi Join
+                                                                           Hash Cond: (date_dim_4.d_week_seq = date_dim_5.d_week_seq)
+                                                                           ->  Parallel Seq Scan on date_dim date_dim_4
+                                                                           ->  Parallel Hash
+                                                                                 ->  Parallel Seq Scan on date_dim date_dim_5
+                                                                                       Filter: (d_date = ANY ('{1998-06-11,1998-09-01,1998-11-12}'::date[]))
+                                             ->  Index Scan using item_pkey on item item_1
+                                                   Index Cond: (i_item_sk = web_returns.wr_item_sk)
+               ->  Finalize GroupAggregate
+                     Group Key: item_2.i_item_id
+                     ->  Gather Merge
+                           Workers Planned: 2
+                           ->  Partial GroupAggregate
+                                 Group Key: item_2.i_item_id
+                                 ->  Sort
+                                       Sort Key: item_2.i_item_id
+                                       ->  Nested Loop
+                                             ->  Parallel Hash Join
+                                                   Hash Cond: (store_returns.sr_returned_date_sk = date_dim_6.d_date_sk)
+                                                   ->  Parallel Seq Scan on store_returns
+                                                   ->  Parallel Hash
+                                                         ->  Parallel Hash Semi Join
+                                                               Hash Cond: (date_dim_6.d_date = date_dim_7.d_date)
+                                                               ->  Parallel Seq Scan on date_dim date_dim_6
+                                                               ->  Parallel Hash
+                                                                     ->  Parallel Hash Semi Join
+                                                                           Hash Cond: (date_dim_7.d_week_seq = date_dim_8.d_week_seq)
+                                                                           ->  Parallel Seq Scan on date_dim date_dim_7
+                                                                           ->  Parallel Hash
+                                                                                 ->  Parallel Seq Scan on date_dim date_dim_8
+                                                                                       Filter: (d_date = ANY ('{1998-06-11,1998-09-01,1998-11-12}'::date[]))
+                                             ->  Index Scan using item_pkey on item item_2
+                                                   Index Cond: (i_item_sk = store_returns.sr_item_sk)
+(81 rows)
+

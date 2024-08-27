@@ -1,0 +1,27 @@
+                                                                                                                                                                                                                                                                                                                                                                                                                                          QUERY PLAN                                                                                                                                                                                                                                                                                                                                                                                                                                          
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit
+   ->  Incremental Sort
+         Sort Key: store.s_store_name, store.s_store_id, (sum(CASE WHEN (date_dim.d_day_name = 'Sunday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END)), (sum(CASE WHEN (date_dim.d_day_name = 'Monday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END)), (sum(CASE WHEN (date_dim.d_day_name = 'Tuesday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END)), (sum(CASE WHEN (date_dim.d_day_name = 'Wednesday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END)), (sum(CASE WHEN (date_dim.d_day_name = 'Thursday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END)), (sum(CASE WHEN (date_dim.d_day_name = 'Friday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END)), (sum(CASE WHEN (date_dim.d_day_name = 'Saturday'::bpchar) THEN store_sales.ss_sales_price ELSE NULL::numeric END))
+         Presorted Key: store.s_store_name, store.s_store_id
+         ->  Finalize GroupAggregate
+               Group Key: store.s_store_name, store.s_store_id
+               ->  Gather Merge
+                     Workers Planned: 2
+                     ->  Partial GroupAggregate
+                           Group Key: store.s_store_name, store.s_store_id
+                           ->  Sort
+                                 Sort Key: store.s_store_name, store.s_store_id
+                                 ->  Hash Join
+                                       Hash Cond: (store_sales.ss_store_sk = store.s_store_sk)
+                                       ->  Parallel Hash Join
+                                             Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                             ->  Parallel Seq Scan on store_sales
+                                             ->  Parallel Hash
+                                                   ->  Parallel Seq Scan on date_dim
+                                                         Filter: (d_year = 2000)
+                                       ->  Hash
+                                             ->  Seq Scan on store
+                                                   Filter: (s_gmt_offset = '-6'::numeric)
+(23 rows)
+

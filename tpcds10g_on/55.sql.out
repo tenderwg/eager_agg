@@ -1,0 +1,25 @@
+                                          QUERY PLAN                                           
+-----------------------------------------------------------------------------------------------
+ Limit
+   ->  Sort
+         Sort Key: (sum(store_sales.ss_ext_sales_price)) DESC, item.i_brand_id
+         ->  GroupAggregate
+               Group Key: item.i_brand, item.i_brand_id
+               ->  Gather Merge
+                     Workers Planned: 2
+                     ->  Sort
+                           Sort Key: item.i_brand, item.i_brand_id
+                           ->  Parallel Hash Join
+                                 Hash Cond: (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
+                                 ->  Nested Loop
+                                       ->  Parallel Seq Scan on item
+                                             Filter: (i_manager_id = 63)
+                                       ->  Bitmap Heap Scan on store_sales
+                                             Recheck Cond: (ss_item_sk = item.i_item_sk)
+                                             ->  Bitmap Index Scan on store_sales_pkey
+                                                   Index Cond: (ss_item_sk = item.i_item_sk)
+                                 ->  Parallel Hash
+                                       ->  Parallel Seq Scan on date_dim
+                                             Filter: ((d_moy = 11) AND (d_year = 2002))
+(21 rows)
+
